@@ -2304,17 +2304,17 @@ function showOtaCard(updateInfo) {
   }
   if (sidebarStatus) {
     sidebarStatus.textContent = `Доступно: v${updateInfo.latestVersion}`;
-    sidebarStatus.style.color = '#a5b4fc';
+    sidebarStatus.style.color = 'var(--text-secondary)';
   }
 
   if (progressBox) progressBox.style.display = 'none';
   if (actions) {
     actions.innerHTML = `
-      <button id="btn-ota-start" onclick="startOtaDownload()" style="flex:1; height:32px; border-radius:8px; border:none; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(99, 102, 241, 0.4);">
-        <span>⚡ Обновить сейчас</span>
+      <button id="btn-ota-start" onclick="startOtaDownload()" style="flex:1; height:28px; border-radius:6px; border:none; background:#e4e4e7; color:#18181b; font-size:11.5px; font-weight:500; cursor:pointer;">
+        Обновить
       </button>
-      <button id="btn-ota-later" onclick="dismissOtaCard()" style="height:32px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#9ca3af; font-size:11.5px; cursor:pointer;">
-        Позже
+      <button id="btn-ota-later" onclick="dismissOtaCard()" style="height:28px; padding:0 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#a1a1aa; font-size:11.5px; cursor:pointer;">
+        Отложить
       </button>
     `;
   }
@@ -2333,18 +2333,18 @@ function showOtaReady() {
   const sidebarStatus = document.getElementById('ota-sidebar-status');
 
   if (subtitle) subtitle.textContent = 'Готово к установке';
-  if (body) body.innerHTML = '✅ Обновление загружено! Нажмите перезапустить для моментального применения.';
+  if (body) body.innerHTML = 'Пакет обновления загружен. Требуется перезапуск приложения.';
   if (sidebarStatus) {
     sidebarStatus.textContent = 'Готово к перезапуску';
-    sidebarStatus.style.color = '#34d399';
+    sidebarStatus.style.color = 'var(--text-primary)';
   }
   if (progressBox) progressBox.style.display = 'none';
   if (actions) {
     actions.innerHTML = `
-      <button onclick="installOtaAndRestart()" style="flex:1; height:34px; border-radius:8px; border:none; background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(16, 185, 129, 0.4);">
-        <span>🔄 Перезапустить сейчас</span>
+      <button onclick="installOtaAndRestart()" style="flex:1; height:28px; border-radius:6px; border:none; background:#e4e4e7; color:#18181b; font-size:11.5px; font-weight:500; cursor:pointer;">
+        Перезапустить
       </button>
-      <button onclick="dismissOtaCard()" style="height:34px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#9ca3af; font-size:11.5px; cursor:pointer;">
+      <button onclick="dismissOtaCard()" style="height:28px; padding:0 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#a1a1aa; font-size:11.5px; cursor:pointer;">
         Позже
       </button>
     `;
@@ -2379,8 +2379,8 @@ async function startOtaDownload() {
   if (progressBox) progressBox.style.display = 'block';
   if (actions) {
     actions.innerHTML = `
-      <div style="font-size:11.5px; color:#9ca3af; text-align:center; width:100%; padding:6px 0;">
-        Скачивание обновления по воздуху...
+      <div style="font-size:11px; color:#71717a; text-align:center; width:100%; padding:5px 0;">
+        Загрузка обновления...
       </div>
     `;
   }
@@ -2390,13 +2390,13 @@ async function startOtaDownload() {
     const res = await window.electronAPI.startUpdateDownload(asset);
     if (res && res.success) {
       showOtaReady();
-      showToast('Обновление успешно скачано! Готово к перезапуску.');
+      showToast('Обновление загружено');
     } else {
-      showToast(`Ошибка загрузки: ${res?.error || 'Неизвестная ошибка'}`);
+      showToast(`Ошибка загрузки: ${res?.error || 'Сбой сети'}`);
       dismissOtaCard();
     }
   } catch (err) {
-    showToast(`Ошибка обновления: ${err.message}`);
+    showToast(`Ошибка: ${err.message}`);
     dismissOtaCard();
   }
 }
@@ -2426,19 +2426,19 @@ async function checkOtaUpdate(manual = false) {
       const result = await window.electronAPI.checkForUpdates();
       if (result && result.hasUpdate) {
         showOtaCard(result);
-        if (manual) showToast(`Найдено обновление v${result.latestVersion}!`);
+        if (manual) showToast(`Найдено обновление v${result.latestVersion}`);
       } else {
         if (sidebarStatus) {
           sidebarStatus.textContent = 'Версия актуальна';
-          sidebarStatus.style.color = 'var(--text-secondary)';
+          sidebarStatus.style.color = 'var(--text-tertiary)';
         }
         if (manual) {
-          showToast('У вас установлена самая актуальная версия HurtMusic!');
+          showToast('Установлена актуальная версия HurtMusic');
         }
       }
     }
   } catch (err) {
-    if (manual) showToast(`Не удалось проверить обновления: ${err.message}`);
+    if (manual) showToast(`Ошибка проверки: ${err.message}`);
   } finally {
     if (icon) icon.classList.remove('ota-spin');
     if (btnText) btnText.textContent = 'Проверить обновления';
