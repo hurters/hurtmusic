@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build artifacts and temp
+dist/
+build/
+*.download
+*.tmp
+*.log
+*.zip
+*.asar.old
+*.asar.bak
+downloads/
+tiktok_video/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

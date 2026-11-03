@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>hurtmusic</title>
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     Modern Pure Charcoal Dark UI/UX Palette (Clean Black, Graphite & Accent)
+     ───────────────────────────────────────────────────────────── */
+  /* ─────────────────────────────────────────────────────────────
+     Unslop Graphite Neutral Palette (Quiet Chrome, Deep Obsidian, Studio Craft)
+     ───────────────────────────────────────────────────────────── */
+  :root, html.dark {
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-glow: transparent;
+    --bg-app: #141415;
+    --sidebar-bg: #0f0f10;
+    --card-bg: #19191b;
+    --card-hover: #232325;
+    --border-color: rgba(237, 237, 237, 0.08);
+    --text-primary: #ededed;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #85858b;
+    --player-bg: rgba(15, 15, 16, 0.98);
+    --badge-bg: rgba(237, 237, 237, 0.06);
+    --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     SoundCloud Vinyl Theme (Graphite & Amber/Gold Studio Accent)
+     ───────────────────────────────────────────────────────────── */
+  html.vinyl, html.light {
+    --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --accent-glow: transparent;
+    --bg-app: #141415;
+    --sidebar-bg: #0f0f10;
+    --card-bg: #19191b;
+    --card-hover: #232328;
+    --border-color: rgba(237, 237, 237, 0.08);
+    --text-primary: #ededed;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #85858b;
+    --player-bg: rgba(15, 15, 16, 0.98);
+    --badge-bg: rgba(245, 158, 11, 0.1);
+    --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ── Vinyl Record Stage (Cover Jacket + Spinning Grooved Vinyl Disc) ── */
+  .vinyl-stage {
+    position: relative;
+    width: calc(var(--hero-jacket-size, 126px) * 1.18);
+    height: var(--hero-jacket-size, 126px);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .vinyl-disc-slip {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    right: -24px;
+    width: calc(var(--hero-jacket-size, 126px) * 0.92);
+    height: calc(var(--hero-jacket-size, 126px) * 0.92);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: 
+      radial-gradient(circle at center, #111 0%, #111 16%, #000 17%, transparent 18%),
+      repeating-radial-gradient(circle at center, #1a1a1a 0, #1a1a1a 2px, #0d0d0d 3px, #1e1e1e 4px),
+      linear-gradient(45deg, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%, rgba(255,255,255,0.15) 100%);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.8), inset 0 0 2px rgba(255, 255, 255, 0.2);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: right 0.5s var(--ios-spring), transform 0.4s ease;
+  }
+
+  .vinyl-disc-slip::after {
+    content: '';
+    width: calc(var(--hero-jacket-size, 126px) * 0.32);
+    height: calc(var(--hero-jacket-size, 126px) * 0.32);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, #000 0%, #000 24%, #ea580c 25%, #ea580c 88%, #ededed 89%, #ededed 100%);
+    box-shadow: 0 0 6px rgba(0,0,0,0.8);
+  }
+
+  @keyframes spinVinylDisc {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .vinyl-stage.playing .vinyl-disc-slip {
+    right: -36px;
+    animation: spinVinylDisc 6s linear infinite;
+  }
+
+  .vinyl-stage:not(.playing) .vinyl-disc-slip {
+    right: -20px;
+    animation: spinVinylDisc 6s linear infinite;
+    animation-play-state: paused;
+  }
+
+  .album-jacket {
+    position: relative;
+    z-index: 2;
+    width: var(--hero-jacket-size, 126px);
+    height: var(--hero-jacket-size, 126px);
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    background: #1B1B1F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .album-jacket img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Fullscreen Vinyl Stage */
+  .vinyl-stage-fs {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .vinyl-disc-fs {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    right: -45px;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    background: 
+      radial-gradient(circle at center, #111 0%, #111 16%, #000 17%, transparent 18%),
+      repeating-radial-gradient(circle at center, #1a1a1a 0, #1a1a1a 2px, #0d0d0d 3px, #1e1e1e 4px),
+      linear-gradient(45deg, rgba(255,255,255,0.18) 0%, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%, rgba(255,255,255,0.18) 100%);
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.9), inset 0 0 2px rgba(255, 255, 255, 0.3);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: right 0.5s var(--ios-spring), transform 0.4s ease;
+  }
+
+  .vinyl-disc-fs::after {
+    content: '';
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #000 0%, #000 24%, #ea580c 25%, #ea580c 88%, #ededed 89%, #ededed 100%);
+    box-shadow: 0 0 8px rgba(0,0,0,0.8);
+  }
+
+  .vinyl-stage-fs.playing .vinyl-disc-fs {
+    right: -75px;
+    animation: spinVinylDisc 6s linear infinite;
+  }
+
+  .vinyl-stage-fs:not(.playing) .vinyl-disc-fs {
+    right: -40px;
+    animation: spinVinylDisc 6s linear infinite;
+    animation-play-state: paused;
+  }
+
+  .album-jacket-fs {
+    position: relative;
+    z-index: 2;
+    width: 250px;
+    height: 250px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+    background: #1B1B1F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Solid White Circular Play Button */
+  .hero-big-white-play {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #ededed !important;
+    color: #141415 !important;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hero-big-white-play:hover {
+    background: #ffffff !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+  .hero-big-white-play:active {
+    transform: scale(0.95);
+  }
+
+  html.vinyl .play-toggle-btn {
+    background: #ededed !important;
+    color: #141415 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+  html.vinyl .play-toggle-btn:hover {
+    background: #ffffff !important;
+    transform: scale(1.05);
+  }
+
+  /* NEW Badge with orange outline */
+  .badge-new-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 4px;
+    padding: 1px 5px;
+    line-height: 1.2;
+    margin-left: 6px;
+  }
+
+  /* Hero Icon Button */
+  .hero-icon-btn {
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 7px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hero-icon-btn:hover {
+    background: #28282b;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+  }
+  .hero-icon-btn:active {
+    transform: scale(0.97);
+  }
+
+  html.vinyl .search-input {
+    background: #1E1E23 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 20px !important;
+    color: #FFFFFF !important;
+  }
+  html.vinyl .search-input:focus {
+    background: #25252B !important;
+    border-color: rgba(255, 85, 0, 0.5) !important;
+    box-shadow: 0 0 12px rgba(255, 85, 0, 0.25) !important;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* ── Custom Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+  /* ── Native Window Titlebar ── */
+  #titlebar {
+    height: 38px;
+    flex-shrink: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    -webkit-app-region: drag;
+    z-index: 9999;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  /* Apple-style Right Window Controls & Theme Switcher */
+  .window-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .theme-toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #19191b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    margin-right: 6px;
+  }
+
+  .theme-toggle-pill:hover {
+    background: #232325;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .win-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .win-btn:hover {
+    background: rgba(128, 128, 128, 0.15);
+    color: var(--text-primary);
+  }
+
+  .win-btn.close:hover {
+    background: #FA243C;
+    color: #ffffff;
+  }
+
+  /* ── Glassmorphism ── */
+  .glass {
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+  }
+
+  /* ── App Layout ── */
+  #app-container {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+  }
+
+  #sidebar {
+    width: var(--sidebar-w, 240px);
+    min-width: var(--sidebar-w, 240px);
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    gap: 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: width 0.25s ease, min-width 0.25s ease;
+  }
+
+  #main-viewport {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 24px;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Sidebar Items ── */
+  .nav-group-title {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    padding: 0 12px;
+    margin-bottom: 8px;
+    letter-spacing: 0;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 450;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-item:hover {
+    background: #19191b;
+    color: var(--text-primary);
+  }
+
+  .nav-item.active {
+    background: #232325;
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-weight: 500;
+  }
+
+  .import-lane-btn {
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .import-lane-btn:hover {
+    background: #28282b;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .import-lane-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Header Search & Filter Bar ── */
+  .top-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 32px 10px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input-wrapper > svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 34px 9px 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: #16161B;
+    color: var(--text-primary);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    background: #1C1C23;
+  }
+
+  .search-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-secondary);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    z-index: 2;
+  }
+
+  .search-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+    color: var(--text-primary);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .search-kbd {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .cat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .cat-dot-orange { background: #f59e0b; }
+  .cat-dot-red { background: #ef4444; }
+  .cat-dot-yellow { background: #eab308; }
+  .cat-dot-purple { background: #a855f7; }
+  .cat-dot-blue { background: #3b82f6; }
+  .cat-dot-green { background: #10b981; }
+
+  .category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #19191b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+    padding: 6px 13px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    user-select: none;
+    flex-shrink: 0;
+    height: 32px;
+    box-sizing: border-box;
+  }
+
+  .category-pill:hover {
+    background: #232325;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .category-pill.active {
+    background: #28282b;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Hero Banner ── */
+  .hero-card {
+    margin: 8px clamp(16px, 2vw, 32px) 16px;
+    padding: clamp(14px, 1.8vw, 20px) clamp(16px, 2vw, 24px);
+    border-radius: 12px;
+    background: #19191b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    gap: clamp(14px, 1.8vw, 24px);
+    flex-shrink: 0;
+  }
+
+  .hero-badge, .context-pill {
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2.5px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: 0;
+  }
+
+  /* ── Apple iOS Fluid Physics Curves & Animations ── */
+  :root {
+    --ios-spring: cubic-bezier(0.25, 1, 0.5, 1);
+    --ios-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ios-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* ── Track Table View ── */
+  .tracks-container {
+    padding: 0 32px 32px;
+    animation: iosContentSlideIn 0.35s var(--ios-spring);
+  }
+
+  @keyframes iosContentSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes iosListItemIn {
+    0% {
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: background 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .track-row:hover {
+    background: var(--card-hover);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .track-row:active {
+    transform: scale(0.99);
+  }
+
+  .track-row.now-playing {
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .track-row.now-playing .track-title {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* ── Apple iOS Animated Equalizer Waves ── */
+  .ios-equalizer {
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    height: 14px;
+    width: 14px;
+  }
+
+  .ios-eq-bar {
+    width: 2.5px;
+    background: var(--accent);
+    border-radius: 99px;
+    animation: iosEqPulse 0.75s ease-in-out infinite alternate;
+  }
+
+  .ios-eq-bar.bar-1 { height: 5px; animation-delay: 0.1s; }
+  .ios-eq-bar.bar-2 { height: 14px; animation-delay: 0.35s; }
+  .ios-eq-bar.bar-3 { height: 8px; animation-delay: 0.2s; }
+
+  @keyframes iosEqPulse {
+    0% { height: 3px; }
+    100% { height: 14px; }
+  }
+
+  /* ── Apple iOS Heart Spring Pop ── */
+  @keyframes iosHeartPop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.42) rotate(-10deg); }
+    70% { transform: scale(0.88) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .fav-heart-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s var(--ios-bounce);
+  }
+
+  .fav-heart-btn:active {
+    transform: scale(0.78);
+  }
+
+  .fav-heart-btn.liked svg {
+    animation: iosHeartPop 0.45s var(--ios-bounce);
+  }
+
+  .track-cover-art {
+    width: var(--track-cover-size, 44px);
+    height: var(--track-cover-size, 44px);
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #22222A, #16161B);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.22);
+    transition: transform 0.3s var(--ios-spring), box-shadow 0.3s ease;
+  }
+
+  @keyframes iosCoverBreathe {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 4px 14px var(--accent-glow)); }
+    100% { transform: scale(1); }
+  }
+
+  #bar-cover-art.playing {
+    animation: iosCoverBreathe 3.5s ease-in-out infinite;
+  }
+
+  .track-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--badge-bg);
+    color: var(--accent);
+    transition: transform 0.2s var(--ios-spring);
+  }
+
+  #ambient-backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+    filter: blur(85px);
+    transition: background 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+    will-change: background;
+  }
+
+  /* ── Docked Bottom Player Bar (Clean Apple / Spotify Desktop Style) ── */
+  #player-bar {
+    position: relative;
+    flex-shrink: 0;
+    height: 82px;
+    background: var(--player-bg);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    gap: 16px;
+    z-index: 1000;
+    box-sizing: border-box;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  html.vinyl #player-bar {
+    background: rgba(18, 16, 14, 0.96);
+    border-top: 1px solid rgba(255, 85, 0, 0.2);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6), 0 -1px 12px rgba(255, 85, 0, 0.1);
+  }
+
+  /* ── Timeline Slider ── */
+  .slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .time-label {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+    width: 38px;
+    text-align: center;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 99px;
+    background: linear-gradient(to right, var(--accent) var(--pct, 0%), rgba(255, 255, 255, 0.08) var(--pct, 0%));
+    transition: height 0.15s ease;
+  }
+
+  input[type=range]:hover::-webkit-slider-runnable-track {
+    height: 5px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ededed;
+    margin-top: -3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
+  }
+
+  input[type=range]:hover::-webkit-slider-thumb {
+    transform: scale(1.3);
+    background: #ffffff;
+  }
+
+  input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(1.4);
+    background: #ffffff;
+  }
+
+  .play-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ededed;
+    color: #141415;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .play-toggle-btn:hover {
+    background: #ffffff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  .play-toggle-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* ── Fullscreen Modal Overlay (iOS Bottom Sheet Physics) ── */
+  #fs-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(10, 10, 14, 0.95);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    transform: translateY(100%) scale(0.94);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.5s var(--ios-ease),
+                opacity 0.4s var(--ios-ease);
+    will-change: transform, opacity;
+  }
+
+  #fs-overlay.active {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .spinning-disc {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: spin 16s linear infinite;
+    animation-play-state: paused;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spinning-disc.playing {
+    animation-play-state: running;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Drag & Drop Overlay ── */
+  #drop-zone-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(250, 36, 60, 0.2);
+    border: 3px dashed var(--accent);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+  }
+
+  #drop-zone-overlay.dragover {
+    display: flex;
+  }
+
+  /* ── Apple iOS Dynamic Island Style Toast ── */
+  .toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-60px) scale(0.85);
+    background: rgba(22, 22, 28, 0.9);
+    backdrop-filter: blur(35px) saturate(200%);
+    -webkit-backdrop-filter: blur(35px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #FFFFFF;
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.45s var(--ios-bounce),
+                opacity 0.3s ease;
+    z-index: 999999;
+  }
+
+  .toast.show, .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  /* ── My Wave (Моя волна) UI Components ── */
+  .wave-icon-animated {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 14px;
+    margin-right: 2px;
+  }
+  .wave-icon-animated span {
+    width: 2.5px;
+    background: #3390EC;
+    border-radius: 2px;
+    animation: waveBarBounce 1.2s ease-in-out infinite;
+  }
+  .wave-icon-animated span:nth-child(1) { height: 6px; animation-delay: 0.0s; }
+  .wave-icon-animated span:nth-child(2) { height: 13px; animation-delay: 0.2s; }
+  .wave-icon-animated span:nth-child(3) { height: 9px; animation-delay: 0.4s; }
+  .wave-icon-animated span:nth-child(4) { height: 14px; animation-delay: 0.1s; }
+
+  @keyframes waveBarBounce {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  .my-wave-player-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #19191b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    user-select: none;
+  }
+  .my-wave-player-pill:hover {
+    background: #232325;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+  .my-wave-player-pill:active {
+    transform: scale(0.97);
+  }
+  .my-wave-player-pill.active {
+    background: #28282b;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .my-wave-player-pill .wave-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    transition: all 0.2s ease;
+  }
+  .my-wave-player-pill.active .wave-pill-dot {
+    background: #10b981;
+  }
+
+  .my-wave-hero {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 28px 20px;
+    border-radius: 14px;
+    background: #19191b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    min-height: 340px;
+  }
+
+  .spectral-canvas-wrapper {
+    width: 100%;
+    height: 220px;
+    min-height: 220px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px 0 18px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  #spectral-wave-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .wave-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #232325;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .wave-action-btn:hover {
+    background: #28282b;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .wave-action-btn:active {
+    transform: scale(0.96);
+  }
+
+  .wave-mode-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  .wave-chip {
+    padding: 6px 13px;
+    border-radius: 8px;
+    background: #141415;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .wave-chip:hover {
+    background: #232325;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .wave-chip:active {
+    transform: scale(0.97);
+  }
+
+  .wave-chip.active {
+    background: #28282b;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Dynamic Resolution Stabilization & Responsive Breakpoints
+     Auto-detects and stabilizes stretched 4:3, low height, compact resolutions
+     ───────────────────────────────────────────────────────────── */
+  #search-categories-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 32px 14px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-shrink: 0;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
+  #search-categories-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 1040px) {
+    #sidebar {
+      width: 200px;
+      min-width: 200px;
+      padding: 14px 10px;
+    }
+    .top-search-bar {
+      padding: 16px 20px 8px;
+    }
+    #top-search-hint {
+      display: none;
+    }
+    .search-input-wrapper {
+      max-width: 100%;
+    }
+    .tracks-container {
+      padding: 0 20px 24px;
+    }
+    #my-wave-view {
+      padding: 14px 20px 24px;
+    }
+    .hero-card {
+      margin: 8px 20px 18px;
+      padding: 18px 22px;
+    }
+    #search-categories-bar {
+      padding: 0 20px 12px;
+    }
+    .track-row-album {
+      display: none;
+    }
+    .badge-new-pill {
+      display: none;
+    }
+    #bar-left {
+      max-width: 220px;
+    }
+    #bar-right {
+      max-width: 280px;
+    }
+  }
+
+  @media (max-width: 860px) {
+    #sidebar {
+      width: 60px;
+      min-width: 60px;
+      padding: 12px 6px;
+      align-items: center;
+      overflow-x: hidden;
+    }
+    .nav-group-title {
+      display: none;
+    }
+    .nav-item {
+      justify-content: center;
+      padding: 9px 0;
+      width: 44px;
+      height: 44px;
+      font-size: 0;
+      gap: 0;
+    }
+    .nav-item svg, .nav-item .wave-icon-animated {
+      margin: 0;
+    }
+    .import-lane-btn {
+      padding: 9px 0;
+      width: 44px;
+      height: 44px;
+      font-size: 0;
+      gap: 0;
+      border-radius: 50%;
+    }
+    #theme-text, #res-settings-box {
+      display: none;
+    }
+    .theme-toggle-pill {
+      padding: 5px 8px;
+      margin-right: 2px;
+    }
+    .top-search-bar {
+      padding: 10px 14px 6px;
+    }
+    #top-search-hint {
+      display: none;
+    }
+    .tracks-container {
+      padding: 0 14px 20px;
+    }
+    #my-wave-view {
+      padding: 12px 14px 20px;
+    }
+    .hero-card {
+      margin: 6px 14px 14px;
+      padding: 14px 16px;
+    }
+    .track-row-album {
+      display: none;
+    }
+    .badge-new-pill {
+      display: none;
+    }
+    .track-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+    }
+    #player-bar {
+      padding: 0 14px;
+      gap: 8px;
+    }
+    #bar-heart-btn {
+      display: none;
+    }
+    #bar-left {
+      max-width: 170px;
+      gap: 8px;
+    }
+    #bar-artist {
+      display: none;
+    }
+    #bar-cover-art {
+      width: 38px;
+      height: 38px;
+    }
+    #player-buttons-row {
+      gap: 12px;
+    }
+    .time-label {
+      width: 32px;
+      font-size: 10px;
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     1440x1080 & 4:3 Stretched Gaming Resolution Auto-Fit Profile
+     ───────────────────────────────────────────────────────────── */
+  body.aspect-4-3 .hero-card,
+  body.res-1440-1080 .hero-card {
+    padding: 16px 22px;
+    gap: 16px;
+    margin: 8px clamp(14px, 1.6vw, 24px) 14px;
+    flex-wrap: nowrap;
+  }
+  body.aspect-4-3 #hero-title,
+  body.res-1440-1080 #hero-title {
+    font-size: 22px;
+  }
+  body.aspect-4-3 #hero-subtitle,
+  body.res-1440-1080 #hero-subtitle {
+    font-size: 12.5px;
+    margin-bottom: 8px;
+  }
+  body.aspect-4-3 .my-wave-hero,
+  body.res-1440-1080 .my-wave-hero {
+    padding: 18px 22px 16px;
+    margin-bottom: 16px;
+    min-height: 290px;
+    flex-shrink: 0;
+  }
+  body.aspect-4-3 .spectral-canvas-wrapper,
+  body.res-1440-1080 .spectral-canvas-wrapper {
+    height: 190px;
+    min-height: 190px;
+    margin: 10px 0 14px;
+    flex-shrink: 0;
+  }
+  body.aspect-4-3 .my-wave-hero h1,
+  body.res-1440-1080 .my-wave-hero h1 {
+    font-size: 22px;
+  }
+  body.aspect-4-3 #wave-current-source-desc,
+  body.res-1440-1080 #wave-current-source-desc {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  body.aspect-4-3 .tracks-container,
+  body.res-1440-1080 .tracks-container {
+    padding: 0 clamp(16px, 1.8vw, 24px) 24px;
+  }
+  body.aspect-4-3 #my-wave-view,
+  body.res-1440-1080 #my-wave-view {
+    padding: 12px clamp(16px, 1.8vw, 24px) 24px;
+  }
+  body.aspect-4-3 .top-search-bar,
+  body.res-1440-1080 .top-search-bar {
+    padding: 16px clamp(16px, 1.8vw, 24px) 10px;
+  }
+  body.aspect-4-3 #search-categories-bar,
+  body.res-1440-1080 #search-categories-bar {
+    padding: 0 clamp(16px, 1.8vw, 24px) 12px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+
+  /* ── Gaming HUD Mini-Player Mode (Overlay for Gamers) ── */
+  body.mini-player-mode #titlebar,
+  body.mini-player-mode #app-container,
+  body.mini-player-mode #player-bar,
+  body.mini-player-mode #ambient-backdrop,
+  body.mini-player-mode #fs-overlay {
+    display: none !important;
+  }
+
+  body.mini-player-mode #mini-player-hud {
+    display: flex !important;
+  }
+
+  #mini-player-hud {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #141415;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 0 12px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    -webkit-app-region: drag;
+    user-select: none;
+    overflow: hidden;
+    z-index: 999999;
+  }
+
+  html.vinyl body.mini-player-mode #mini-player-hud {
+    background: #171513;
+    border-color: rgba(234, 88, 12, 0.35);
+  }
+
+  .hud-no-drag {
+    -webkit-app-region: no-drag;
+  }
+</style>
+</head>
+<body>
+  <div id="ambient-backdrop"></div>
+
+  <!-- ── 1. NATIVE WINDOW TITLEBAR (Pure Apple Minimalist Window Controls) ── -->
+  <header id="titlebar">
+    <!-- Left: App Branding -->
+    <div class="no-drag" style="display:flex; align-items:center; gap:10px;">
+      <div style="width:24px; height:24px; border-radius:50%; background:#3390EC; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(51,144,236,0.4);">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M22 2L15 22L11 13L2 9L22 2Z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <span style="font-weight:700; font-size:14px; letter-spacing:-0.2px;">hurtmusic</span>
+    </div>
+
+    <!-- Center Drag Spacer -->
+    <div style="flex:1; height:100%;"></div>
+
+    <!-- Right: Minimalist Native Window Controls -->
+    <div class="window-controls no-drag">
+      <!-- Theme Switcher Pill -->
+      <button class="theme-toggle-pill" id="theme-btn" onclick="toggleTheme()" title="Переключить тему">
+        <svg id="theme-icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <span id="theme-text">Тёмная тема</span>
+      </button>
+
+      <!-- Mini-Player HUD Button -->
+      <button class="win-btn" id="btn-pip" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон (Ctrl+Shift+M)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+          <rect x="11" y="8" width="9" height="7" rx="1.5" fill="currentColor"></rect>
+        </svg>
+      </button>
+
+      <!-- Minimize Button -->
+      <button class="win-btn" id="btn-minimize" title="Minimize">
+        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+
+      <!-- Maximize / Restore Button -->
+      <button class="win-btn" id="btn-maximize" title="Maximize">
+        <svg id="icon-max" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+        </svg>
+        <svg id="icon-restore" style="display:none;" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <rect x="5" y="8" width="11" height="11" rx="1.5"></rect>
+          <path d="M8 5h8a2 2 0 0 1 2 2v8"></path>
+        </svg>
+      </button>
+
+      <!-- Close Button -->
+      <button class="win-btn close" id="btn-close" title="Close">
+        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── 2. APP CONTAINER ── -->
+  <div id="app-container">
+
+    <!-- ── Sidebar ── -->
+    <aside id="sidebar">
+      <!-- Navigation: Discover & Library -->
+      <div>
+        <p class="nav-group-title">Музыка онлайн</p>
+        <div class="nav-item" data-view="my-wave" onclick="switchView('my-wave')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path>
+          </svg>
+          Моя волна
+        </div>
+        <div class="nav-item active" data-view="online-search" onclick="switchView('online-search')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          Поиск музыки
+        </div>
+
+        <p class="nav-group-title" style="margin-top:18px;">Медиатека</p>
+        <div class="nav-item" data-view="downloaded" onclick="switchView('downloaded')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Скачанные треки
+        </div>
+        <div class="nav-item" data-view="favorites" onclick="switchView('favorites')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          Любимые треки
+        </div>
+        <div class="nav-item" data-view="artists" onclick="switchView('artists')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Исполнители
+        </div>
+        <div class="nav-item" data-view="albums" onclick="switchView('albums')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Альбомы
+        </div>
+      </div>
+
+      <!-- Resolution & Aspect Ratio Settings Switcher -->
+      <div id="res-settings-box" style="margin-top:auto; margin-bottom:8px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <span style="color:var(--text-tertiary); font-weight:500;">Разрешение</span>
+          <span id="res-badge" style="color:var(--text-secondary); font-weight:500; font-size:10px; font-variant-numeric:tabular-nums;">1440×1080</span>
+        </div>
+        <select id="res-select" onchange="changeResolutionPreset(this.value)" style="width:100%; background:#141415; border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; padding:5px 8px; font-size:11px; font-weight:500; cursor:pointer; outline:none;">
+          <option value="auto">Автоопределение</option>
+          <option value="1440x1080" selected>1440 × 1080 (4:3)</option>
+          <option value="1920x1080">1920 × 1080 (16:9)</option>
+          <option value="1280x720">1280 × 720 (16:9)</option>
+          <option value="1024x768">1024 × 768 (4:3)</option>
+        </select>
+      </div>
+
+      <!-- Theme Switcher in Sidebar -->
+      <div style="margin-bottom:10px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:var(--text-tertiary); font-weight:500;">Тема оформления</span>
+          <span id="theme-badge" style="color:var(--text-secondary); font-weight:500;">Тёмная</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <button id="btn-theme-dark" onclick="setTheme('dark')" style="padding:6px 4px; border-radius:6px; border:1px solid rgba(255,255,255,0.18); background:#232325; color:var(--text-primary); font-size:11px; font-weight:500; cursor:pointer;">
+            Hurt Dark
+          </button>
+          <button id="btn-theme-light" onclick="setTheme('vinyl')" style="padding:6px 4px; border-radius:6px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:11px; font-weight:500; cursor:pointer;">
+            Винил
+          </button>
+        </div>
+      </div>
+
+      <!-- Offline Storage Info Badge -->
+      <div style="padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
+        <p style="color:var(--text-tertiary); font-weight:500; margin-bottom:4px;">Хранилище</p>
+        <p id="downloaded-count-label" style="color:var(--text-secondary); font-size:11.5px; font-variant-numeric:tabular-nums;">
+          0 скачанных треков
+        </p>
+        <p id="storage-size-label" style="margin-top:2px; color:var(--text-tertiary); font-variant-numeric:tabular-nums;">
+          0 МБ на диске
+        </p>
+        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+          <p style="color:var(--text-tertiary); font-size:10px; margin-bottom:3px;">Папка на компьютере:</p>
+          <p id="download-folder-label" style="color:var(--text-secondary); font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="openDownloadFolder()" title="Открыть папку в Проводнике">
+            Загрузка...
+          </p>
+          <div style="display:flex; gap:4px; margin-top:6px;">
+            <button class="win-btn" onclick="changeDownloadFolder()" style="flex:1; height:22px; font-size:10px; padding:0 4px;" title="Выбрать любую свою папку для скачивания треков">
+              Выбрать
+            </button>
+            <button class="win-btn" onclick="openDownloadFolder()" style="flex:1; height:22px; font-size:10px; padding:0 4px;" title="Открыть папку с музыкой в Проводнике Windows">
+              Открыть
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OTA Updates Info in Sidebar -->
+      <div style="margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <span style="color:var(--text-tertiary); font-weight:500;">Обновление</span>
+          <span id="ota-version-tag" style="color:var(--accent-primary, #6366f1); font-weight:600; font-size:10.5px;">v1.0.0</span>
+        </div>
+        <p id="ota-sidebar-status" style="color:var(--text-secondary); font-size:11px; margin-bottom:8px;">
+          Версия актуальна
+        </p>
+        <button id="btn-check-ota" class="win-btn" onclick="checkOtaUpdate(true)" style="width:100%; height:24px; font-size:10.5px; display:flex; align-items:center; justify-content:center; gap:5px;" title="Проверить наличие обновлений на GitHub">
+          <svg id="ota-check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="btn-check-ota-text">Проверить обновления</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── Main Viewport ── -->
+    <main id="main-viewport">
+      <!-- ── Standard Library View ── -->
+      <div id="standard-library-view" style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:visible; width:100%; min-width:0;">
+        <!-- Search and Filter Bar -->
+        <div class="top-search-bar">
+          <div class="search-input-wrapper">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="library-search" class="search-input" placeholder="Поиск по библиотеке и SoundCloud" oninput="handleSearch(this.value)">
+            <!-- Clear Search (X) Button -->
+            <button id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" title="Очистить поиск" aria-label="Очистить поиск">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <kbd class="search-kbd">⌘K</kbd>
+          </div>
+
+          <div id="top-search-hint" style="font-size:12px; color:var(--text-tertiary); margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            SoundCloud & Офлайн
+          </div>
+        </div>
+
+        <!-- Online Category Selector Chips -->
+        <div id="search-categories-bar" style="display:flex; align-items:center; gap:8px; padding:0 32px 14px; overflow-x:auto; flex-shrink:0; min-height:48px; box-sizing:border-box;">
+          <button class="category-pill active" data-category="trending" onclick="selectSearchCategory('trending')">
+            <span class="cat-dot cat-dot-orange"></span>
+            <span>Тренды SoundCloud</span>
+          </button>
+          <button class="category-pill" data-category="opium" onclick="selectSearchCategory('opium')">
+            <span class="cat-dot cat-dot-red"></span>
+            <span>Опиум & Андерграунд</span>
+          </button>
+          <button class="category-pill" data-category="phonk" onclick="selectSearchCategory('phonk')">
+            <span class="cat-dot cat-dot-yellow"></span>
+            <span>Phonk & Drift</span>
+          </button>
+          <button class="category-pill" data-category="witchhouse" onclick="selectSearchCategory('witchhouse')">
+            <span class="cat-dot cat-dot-purple"></span>
+            <span>Witch House</span>
+          </button>
+          <button class="category-pill" data-category="russian-top" onclick="selectSearchCategory('russian-top')">
+            <span class="cat-dot cat-dot-blue"></span>
+            <span>Топ Рэп РФ</span>
+          </button>
+        </div>
+
+        <!-- Hero Banner with Vinyl Record Effect & Bleood Style Actions -->
+        <div class="hero-card" id="main-hero-card" style="display:flex; align-items:center; justify-content:space-between; gap:clamp(12px, 1.8vw, 24px); flex-wrap:nowrap;">
+          <div style="display:flex; align-items:center; gap:clamp(14px, 1.8vw, 24px); min-width:0; flex:1;">
+            <!-- Vinyl Record Artwork Unit -->
+            <div class="vinyl-stage" id="hero-vinyl-stage">
+              <div class="vinyl-disc-slip" id="hero-vinyl-disc"></div>
+              <div class="album-jacket" id="hero-album-jacket">
+                <img id="hero-cover-img" src="" style="display:none;" />
+                <div id="hero-cover-placeholder" style="color:var(--text-tertiary);">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title & Metadata -->
+            <div style="min-width:0; flex:1;">
+              <span class="hero-badge" id="hero-badge">SoundCloud Charts</span>
+              <h1 id="hero-title" style="font-size:24px; font-weight:600; letter-spacing:-0.3px; margin:4px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                Поиск музыки
+              </h1>
+              <p id="hero-subtitle" style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">
+                Стриминг треков и воспроизведение локальной медиатеки
+              </p>
+              <div id="hero-artist-badge" style="display:inline-flex; align-items:center; gap:6px; background:#232325; border:1px solid rgba(255,255,255,0.08); padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:500; color:var(--text-secondary);">
+                <span id="hero-artist-name">By hurtmusic</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions: Heart, Shuffle, and Big White Play Button like Screenshot -->
+          <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+            <button id="hero-fav-btn" onclick="toggleCurrentTrackFavorite()" class="hero-icon-btn" title="В любимые">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              <span id="hero-fav-count" style="font-size:12.5px; font-weight:700;">7422</span>
+            </button>
+            <button id="hero-shuffle-btn" onclick="toggleShuffle()" class="hero-icon-btn" title="Перемешать">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 3 21 3 21 8"></polyline>
+                <line x1="4" y1="20" x2="21" y2="3"></line>
+                <polyline points="21 16 21 21 16 21"></polyline>
+                <line x1="4" y1="4" x2="9" y2="9"></line>
+              </svg>
+            </button>
+            <button id="hero-action-btn" onclick="switchView('downloaded')" class="hero-icon-btn" title="Скачанные треки">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Скачанные</span>
+            </button>
+            <!-- Big Solid White Play Button from Screenshot -->
+            <button id="hero-main-play" class="hero-big-white-play" onclick="togglePlayPause()" title="Play / Pause">
+              <svg id="hero-icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg id="hero-icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tracks Container -->
+        <div class="tracks-container">
+          <!-- List Header -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:0 8px;">
+            <h2 id="view-heading" style="font-size:18px; font-weight:700;">All Downloaded Tracks</h2>
+            <span id="track-stats-label" style="font-size:12px; color:var(--text-tertiary);">0 songs</span>
+          </div>
+
+          <!-- Track Rows List -->
+          <div id="track-list" style="display:flex; flex-direction:column; gap:4px;">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Empty State View -->
+          <div id="empty-state" style="text-align:center; padding:60px 20px; display:none;">
+            <div style="width:64px; height:64px; border-radius:50%; background:rgba(51,144,236,0.12); color:#3390EC; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+            </div>
+            <h3 style="font-size:18px; font-weight:600; margin-bottom:6px;">Локальные треки не найдены</h3>
+            <p style="font-size:13px; color:var(--text-secondary); max-width:380px; margin:0 auto 18px;">
+              Скачивайте треки из онлайн поиска или укажите папку на ПК с музыкой.
+            </p>
+            <button class="import-lane-btn" style="margin:0 auto;" onclick="triggerLaneFolderImport()">
+              Выбрать папку с музыкой
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Dedicated My Wave View ── -->
+      <div id="my-wave-view" style="display:none; flex-direction:column; flex:1; min-height:0; overflow:visible; width:100%; min-width:0; padding:16px 32px 32px; box-sizing:border-box;">
+        <div class="my-wave-hero">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; width:100%;">
+            <div>
+              <span class="context-pill" id="wave-mode-badge">Персональный поток</span>
+              <h1 style="font-size:24px; font-weight:600; letter-spacing:-0.3px; margin:4px 0 4px;">Моя волна</h1>
+              <p id="wave-current-source-desc" style="font-size:13px; color:var(--text-secondary); max-width:520px; margin:0;">
+                Бесконечный поток музыки на основе ваших предпочтений
+              </p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="wave-status-text" style="font-size:12px; color:var(--text-tertiary); font-variant-numeric:tabular-nums;">
+                Готова к запуску
+              </span>
+              <button id="wave-sphere-orb" class="wave-action-btn" onclick="toggleMyWavePlayback()" title="Запуск / пауза Волны">
+                <svg id="wave-orb-icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg id="wave-orb-icon-pause" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Spectral Resonance Harmonics Canvas (Signature Visual) -->
+          <div class="spectral-canvas-wrapper">
+            <canvas id="spectral-wave-canvas"></canvas>
+          </div>
+
+          <!-- Mode Chips -->
+          <div class="wave-mode-chips">
+            <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path>
+              </svg>
+              По текущему треку
+            </button>
+            <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              Мои любимые
+            </button>
+            <button class="wave-chip" id="chip-mode-energetic" onclick="setWaveMood('energetic')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              Движ & Энергия
+            </button>
+            <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              Чилл & Релакс
+            </button>
+            <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Свежие релизы
+            </button>
+          </div>
+        </div>
+
+        <!-- Wave Queue Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 8px; flex-shrink:0;">
+          <div>
+            <h2 style="font-size:16px; font-weight:600;">Далее в вашей волне</h2>
+            <p id="wave-queue-sublabel" style="font-size:12px; color:var(--text-tertiary); margin-top:2px;">
+              Похожие треки подбираются автоматически
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="downloadWaveQueueBatch()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Сохранить всю очередь волны на диск">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Скачать поток
+            </button>
+            <button onclick="refreshWaveQueue()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              Обновить поток
+            </button>
+          </div>
+        </div>
+
+        <!-- Wave Track Queue List -->
+        <div id="wave-track-list" style="display:flex; flex-direction:column; gap:4px;">
+          <!-- Dynamically populated from wave queue -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── 3. BOTTOM PERSISTENT PLAYER BAR ── -->
+  <footer id="player-bar">
+    <!-- Left: Current Track Details -->
+    <div id="bar-left" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; max-width:260px; cursor:pointer;" onclick="openFullscreenModal()">
+      <div id="bar-cover-art" class="track-cover-art">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3390EC" stroke-width="2">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+      </div>
+      <div style="overflow:hidden; min-width:0; flex:1;">
+        <p id="bar-title" style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          Not Playing
+        </p>
+        <p id="bar-artist" style="font-size:12px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          Select a song from library
+        </p>
+      </div>
+      <button id="bar-heart-btn" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="event.stopPropagation(); toggleCurrentTrackFavorite()" title="В любимые">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+
+      <!-- 1-Click Offline Cache Button -->
+      <button id="bar-download-btn" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="event.stopPropagation(); downloadCurrentPlayingTrack()" title="Сохранить трек офлайн навсегда (1 клик)">
+        <svg id="bar-dl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Center: Playback Controls & Timeline -->
+    <div id="bar-center" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; flex:2; min-width:0; max-width:620px; width:100%;">
+      <!-- Buttons -->
+      <div id="player-buttons-row" style="display:flex; align-items:center; gap:clamp(8px, 1.2vw, 16px); flex-wrap:nowrap;">
+        <!-- Shuffle -->
+        <button id="btn-shuffle" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleShuffle()" title="Shuffle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+        </button>
+
+        <!-- Previous -->
+        <button style="background:transparent; border:none; color:var(--text-primary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="playPrevious()" title="Previous">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+          </svg>
+        </button>
+
+        <!-- Play/Pause -->
+        <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause" style="flex-shrink:0;">
+          <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg id="icon-pause" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
+
+        <!-- Next -->
+        <button style="background:transparent; border:none; color:var(--text-primary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="playNext()" title="Next">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/>
+          </svg>
+        </button>
+
+        <!-- Repeat -->
+        <button id="btn-repeat" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleRepeat()" title="Repeat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="17 1 21 5 17 9"></polyline>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+            <polyline points="7 23 3 19 7 15"></polyline>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+          </svg>
+        </button>
+
+        <!-- My Wave Pill Button -->
+        <button id="btn-player-wave" class="my-wave-player-pill" onclick="toggleMyWaveMode()" title="Включить / Выключить Мою Волну (Бесконечный поток похожих треков)">
+          <span class="wave-pill-dot"></span>
+          <span>Моя волна</span>
+        </button>
+
+        <!-- Mini-Player HUD Toggle Button -->
+        <button id="btn-pip-bar" class="my-wave-player-pill" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон (Ctrl+Shift+M)" style="gap:5px; padding:5px 9px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+            <rect x="11" y="8" width="9" height="7" rx="1.5" fill="currentColor"></rect>
+          </svg>
+          <span style="font-size:11px; font-weight:700;">HUD</span>
+        </button>
+      </div>
+
+      <!-- Scrubber -->
+      <div class="slider-wrapper">
+        <span class="time-label" id="current-time-label">0:00</span>
+        <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1"
+               oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)">
+        <span class="time-label" id="duration-label">-0:00</span>
+      </div>
+    </div>
+
+    <!-- Right: Volume Slider & Fullscreen Toggle -->
+    <div id="bar-right" style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; max-width:260px; justify-content:flex-end;">
+      <!-- Real-Time Audio Visualizer Canvas -->
+      <canvas id="player-visualizer-canvas" width="60" height="18" style="width:60px; height:18px; border-radius:4px; opacity:0.85; flex-shrink:0;" title="Реактивная спектрограмма"></canvas>
+
+      <button id="btn-mute" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleMute()">
+        <svg id="icon-vol-high" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        <svg id="icon-vol-mute" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
+
+      <div style="width:clamp(50px, 7vw, 85px); min-width:45px;">
+        <input type="range" id="volume-slider" min="0" max="1" value="0.8" step="0.01" oninput="setVolume(this.value)">
+      </div>
+
+      <button id="btn-fs" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="openFullscreenModal()" title="Fullscreen Player">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ── 4. FULLSCREEN IMMERSIVE MODAL ── -->
+  <div id="fs-overlay">
+    <button style="position:absolute; top:24px; left:24px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="closeFullscreenModal()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Center Vinyl Stage with Album Jacket and Sliding Disc (From Screenshot) -->
+    <div class="vinyl-stage-fs" id="fs-vinyl-stage">
+      <div class="vinyl-disc-fs" id="fs-vinyl-disc"></div>
+      <div class="album-jacket-fs" id="fs-jacket">
+        <img id="fs-cover-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+        <div id="fs-placeholder-icon" style="color:var(--text-tertiary);">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div style="text-align:center; margin-top:32px; max-width:480px;">
+      <h2 id="fs-title" style="font-size:24px; font-weight:700; margin-bottom:6px;">Not Playing</h2>
+      <p id="fs-artist" style="font-size:16px; color:rgba(255,255,255,0.6);">Select a track</p>
+    </div>
+
+    <!-- Modal Scrubber -->
+    <div class="slider-wrapper" style="margin-top:24px; max-width:440px;">
+      <span class="time-label" id="fs-cur-time" style="color:rgba(255,255,255,0.7);">0:00</span>
+      <input type="range" id="fs-progress" min="0" max="100" value="0" step="0.1"
+             oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)">
+      <span class="time-label" id="fs-dur-time" style="color:rgba(255,255,255,0.7);">-0:00</span>
+    </div>
+
+    <!-- Modal Controls -->
+    <div style="display:flex; align-items:center; gap:28px; margin-top:24px;">
+      <button style="background:transparent; border:none; color:#fff; cursor:pointer;" onclick="playPrevious()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+        </svg>
+      </button>
+      <button class="play-toggle-btn" style="width:56px; height:56px;" onclick="togglePlayPause()">
+        <svg id="fs-icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="fs-icon-pause" style="display:none;" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+      <button style="background:transparent; border:none; color:#fff; cursor:pointer;" onclick="playNext()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 5. GAMING HUD MINI-PLAYER OVERLAY (Always-on-Top / Pip HUD) ── -->
+  <div id="mini-player-hud">
+    <!-- Left: Spinning Vinyl + Cover Art -->
+    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+      <div id="hud-cover-wrap" class="vinyl-stage" style="width:48px; height:48px;">
+        <div id="hud-vinyl-disc" class="vinyl-disc-slip" style="width:42px; height:42px; right:-8px;"></div>
+        <div class="album-jacket" style="width:48px; height:48px; border-radius:6px;">
+          <img id="hud-cover-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+          <div id="hud-cover-placeholder" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; color:var(--text-tertiary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Track Title & Artist -->
+    <div style="flex:1; min-width:0; overflow:hidden;">
+      <p id="hud-title" style="font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-primary); margin:0;">
+        Not Playing
+      </p>
+      <p id="hud-artist" style="font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:2px 0 0;">
+        hurtmusic HUD
+      </p>
+    </div>
+
+    <!-- Right: Mini Controls -->
+    <div class="hud-no-drag" style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
+      <button class="wave-action-btn" style="width:28px; height:28px; padding:0;" onclick="toggleCurrentTrackFavorite()" title="В любимые">
+        <svg id="hud-icon-heart" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+
+      <button class="wave-action-btn" style="width:28px; height:28px; padding:0;" onclick="playPrevious()" title="Назад">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+        </svg>
+      </button>
+
+      <button id="hud-play-btn" class="play-toggle-btn" style="width:30px; height:30px;" onclick="togglePlayPause()" title="Play / Pause">
+        <svg id="hud-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="hud-icon-pause" style="display:none;" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+
+      <button class="wave-action-btn" style="width:28px; height:28px; padding:0;" onclick="playNext()" title="Вперед">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/>
+        </svg>
+      </button>
+
+      <!-- Expand / Restore Full Player -->
+      <button class="wave-action-btn" style="width:28px; height:28px; padding:0; color:var(--accent);" onclick="toggleMiniPlayerMode()" title="Развернуть в полный размер">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 5. FLOATING OTA UPDATE CARD (OVER-THE-AIR) ── -->
+  <style>
+    @keyframes otaSlideUp {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .ota-spin {
+      animation: otaSpin 0.9s linear infinite;
+    }
+    @keyframes otaSpin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <div id="ota-modal-card" style="display:none; position:fixed; bottom:96px; right:24px; z-index:9999; width:350px; background:rgba(18, 18, 24, 0.96); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid rgba(99, 102, 241, 0.4); box-shadow:0 20px 48px rgba(0,0,0,0.65), 0 0 24px rgba(99, 102, 241, 0.2); border-radius:14px; padding:16px; font-family:inherit; animation:otaSlideUp 0.25s cubic-bezier(0.16,1,0.3,1);">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg, #6366f1, #a855f7); display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 4px 12px rgba(99,102,241,0.35);">
+          🚀
+        </div>
+        <div>
+          <div style="font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+            <span>HurtMusic Обновление</span>
+            <span id="ota-card-version-badge" style="font-size:10px; background:rgba(99, 102, 241, 0.25); border:1px solid rgba(99, 102, 241, 0.5); color:#a5b4fc; padding:1px 6px; border-radius:999px;">v1.0.1</span>
+          </div>
+          <div id="ota-card-subtitle" style="font-size:11px; color:#9ca3af; margin-top:1px;">Обновление по воздуху (без переустановки)</div>
+        </div>
+      </div>
+      <button onclick="dismissOtaCard()" style="background:transparent; border:none; color:#6b7280; cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center;" title="Скрыть">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <div id="ota-card-body" style="font-size:11.5px; color:#d1d5db; line-height:1.45; margin-bottom:12px; max-height:85px; overflow-y:auto; word-break:break-word;">
+      Доступна новая версия с оптимизациями звука и новыми возможностями.
+    </div>
+
+    <!-- Progress container -->
+    <div id="ota-card-progress-box" style="display:none; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:#9ca3af; margin-bottom:6px;">
+        <span id="ota-progress-text">Загрузка...</span>
+        <span id="ota-progress-speed" style="color:#a5b4fc; font-variant-numeric:tabular-nums; font-weight:600;"></span>
+      </div>
+      <div style="width:100%; height:6px; background:rgba(255,255,255,0.08); border-radius:999px; overflow:hidden;">
+        <div id="ota-progress-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #6366f1, #ec4899); border-radius:999px; transition:width 0.15s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div id="ota-card-actions" style="display:flex; gap:8px;">
+      <button id="btn-ota-start" onclick="startOtaDownload()" style="flex:1; height:32px; border-radius:8px; border:none; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(99, 102, 241, 0.4);">
+        <span>⚡ Обновить сейчас</span>
+      </button>
+      <button id="btn-ota-later" onclick="dismissOtaCard()" style="height:32px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:#9ca3af; font-size:11.5px; cursor:pointer;">
+        Позже
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 6. TOAST NOTIFICATION ── -->
+  <div id="toast" class="toast">Уведомление</div>
+
+  <!-- ── Scripts ── -->
+  <script src="hls.min.js"></script>
+  <script src="audio-visualizer.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

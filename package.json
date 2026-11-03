@@ -1,0 +1,53 @@
+{
+  "name": "hurtmusic",
+  "version": "1.0.0",
+  "description": "Native standalone player for hurtmusic offline & online",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "music-player",
+    "hurtmusic",
+    "electron",
+    "offline"
+  ],
+  "author": "hurtmusic",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.hurtmusic.desktop",
+    "productName": "hurtmusic",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!tiktok_video/**",
+      "!downloads/**",
+      "!*.md"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "hurtmusic"
+    }
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.5.1",
+    "hls.js": "^1.7.4"
+  }
+}
