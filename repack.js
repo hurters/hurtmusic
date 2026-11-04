@@ -37,6 +37,8 @@ const filesToCopy = [
   'hls.min.js',
   'index.html',
   'lane-online-engine.js',
+  'logo-cloud.png',
+  'logo-full.png',
   'main.js',
   'ota-updater.js',
   'package.json',

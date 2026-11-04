@@ -87,6 +87,7 @@ function createWindow() {
 
   mainWindow = new BrowserWindow({
     title: 'hurtmusic',
+    icon: path.join(__dirname, 'logo-cloud.png'),
     width: targetWidth,
     height: targetHeight,
     minWidth: 860,
