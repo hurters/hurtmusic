@@ -1,12 +1,15 @@
 const { Client } = require('@xhayper/discord-rpc');
+const fs = require('fs');
+const path = require('path');
 
 /**
- * Beautiful Discord Rich Presence Manager for Lane Music
- * Displays currently playing tracks, artist, high-res covers, and live timeline
+ * Beautiful Discord Rich Presence Manager for HurtMusic
+ * Displays currently playing tracks, artist, album, covers, and playback timeline.
  */
 class DiscordRpcManager {
   constructor() {
-    this.clientId = '842112189618978897'; // Apple Music Client ID (matches minimalist Apple Music theme)
+    // HurtMusic Discord Application Client ID
+    this.clientId = this.loadCustomClientId() || '1567895435748704286';
     this.client = null;
     this.isConnected = false;
     this.currentActivity = null;
@@ -14,10 +17,27 @@ class DiscordRpcManager {
     this.lastUpdateTime = 0;
   }
 
+  loadCustomClientId() {
+    try {
+      const cfgPath = path.join(__dirname, 'discord-config.json');
+      if (fs.existsSync(cfgPath)) {
+        const raw = fs.readFileSync(cfgPath, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed.clientId && typeof parsed.clientId === 'string') {
+          return parsed.clientId.trim();
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
   /**
    * Connect to local Discord instance via IPC
    */
-  async init() {
+  async init(overrideClientId) {
+    if (overrideClientId) {
+      this.clientId = overrideClientId;
+    }
     if (this.client) return;
 
     try {
@@ -71,11 +91,11 @@ class DiscordRpcManager {
     try {
       await this.client.user.setActivity({
         details: 'В медиатеке',
-        state: 'Выбирает музыку',
-        largeImageKey: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80',
-        largeImageText: 'hurtmusic',
+        state: 'Выбирает трек',
+        largeImageKey: 'logo',
+        largeImageText: 'HurtMusic',
         buttons: [
-          { label: 'hurtmusic', url: 'https://github.com' }
+          { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' }
         ]
       });
     } catch (e) {
@@ -97,31 +117,33 @@ class DiscordRpcManager {
     const curTime = Math.max(0, Math.floor(data.currentTime || 0));
     const duration = Math.max(0, Math.floor(data.duration || 0));
 
+    const cover = (data.coverUrl && data.coverUrl.startsWith('http'))
+      ? data.coverUrl
+      : 'logo';
+
     const activity = {
-      details: (data.title || 'Unknown Title').slice(0, 128),
-      state: `от ${(data.artist || 'Неизвестный исполнитель')}`.slice(0, 128),
-      largeImageKey: data.coverUrl && data.coverUrl.startsWith('http')
-        ? data.coverUrl
-        : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80',
-      largeImageText: (data.album || 'hurtmusic').slice(0, 128),
+      details: (data.title || 'Трек').slice(0, 128),
+      state: (data.artist || 'HurtMusic').slice(0, 128),
+      largeImageKey: cover,
+      largeImageText: (data.album || 'HurtMusic').slice(0, 128),
       buttons: [
-        { label: 'Слушать в hurtmusic', url: 'https://github.com' }
+        { label: 'Слушать в HurtMusic', url: 'https://t.me/hurtmusics' }
       ]
     };
 
     if (data.isPlaying) {
-      activity.smallImageKey = 'https://img.icons8.com/ios-glyphs/90/fa243c/play--v1.png';
+      activity.smallImageKey = 'play';
       activity.smallImageText = 'Воспроизведение';
 
-      // Timestamps for live timeline bar in Discord
+      // Live progress bar in Discord
       activity.startTimestamp = now - curTime;
       if (duration > 0 && duration >= curTime) {
         activity.endTimestamp = now + (duration - curTime);
       }
     } else {
-      activity.smallImageKey = 'https://img.icons8.com/ios-glyphs/90/fa243c/pause--v1.png';
-      activity.smallImageText = 'На паузе';
-      activity.state = `${(data.artist || 'Неизвестный исполнитель')} · Пауза`.slice(0, 128);
+      activity.smallImageKey = 'pause';
+      activity.smallImageText = 'Пауза';
+      activity.state = `${(data.artist || 'HurtMusic')} · Пауза`.slice(0, 128);
     }
 
     this.currentActivity = activity;
