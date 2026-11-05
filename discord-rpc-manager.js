@@ -15,6 +15,26 @@ class DiscordRpcManager {
     this.currentActivity = null;
     this.reconnectTimer = null;
     this.lastUpdateTime = 0;
+    this.appIconUrl = 'https://cdn.discordapp.com/app-icons/1567895435748704286/931d7e8da910dd42ab5f4d57f755933c.png?size=512';
+    this.fetchAppIcon();
+  }
+
+  fetchAppIcon() {
+    try {
+      const https = require('https');
+      https.get(`https://discord.com/api/v10/applications/${this.clientId}/rpc`, (res) => {
+        let raw = '';
+        res.on('data', chunk => raw += chunk);
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(raw);
+            if (data.icon) {
+              this.appIconUrl = `https://cdn.discordapp.com/app-icons/${this.clientId}/${data.icon}.png?size=512`;
+            }
+          } catch (e) {}
+        });
+      }).on('error', () => {});
+    } catch (e) {}
   }
 
   loadCustomClientId() {
@@ -92,7 +112,7 @@ class DiscordRpcManager {
       await this.client.user.setActivity({
         details: 'В медиатеке',
         state: 'Выбирает трек',
-        largeImageKey: 'logo',
+        largeImageKey: this.appIconUrl || 'logo',
         largeImageText: 'HurtMusic',
         buttons: [
           { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' }
@@ -119,7 +139,7 @@ class DiscordRpcManager {
 
     const cover = (data.coverUrl && data.coverUrl.startsWith('http'))
       ? data.coverUrl
-      : 'logo';
+      : (this.appIconUrl || 'logo');
 
     const activity = {
       details: (data.title || 'Трек').slice(0, 128),
@@ -132,17 +152,12 @@ class DiscordRpcManager {
     };
 
     if (data.isPlaying) {
-      activity.smallImageKey = 'play';
-      activity.smallImageText = 'Воспроизведение';
-
       // Live progress bar in Discord
       activity.startTimestamp = now - curTime;
       if (duration > 0 && duration >= curTime) {
         activity.endTimestamp = now + (duration - curTime);
       }
     } else {
-      activity.smallImageKey = 'pause';
-      activity.smallImageText = 'Пауза';
       activity.state = `${(data.artist || 'HurtMusic')} · Пауза`.slice(0, 128);
     }
 
