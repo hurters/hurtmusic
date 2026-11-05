@@ -113,9 +113,10 @@ class DiscordRpcManager {
         details: 'В медиатеке',
         state: 'Выбирает трек',
         largeImageKey: this.appIconUrl || 'logo',
-        largeImageText: 'HurtMusic',
+        largeImageText: 'HurtMusic · Studio Hi-Fi',
         buttons: [
-          { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' }
+          { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' },
+          { label: 'Скачать плеер', url: 'https://t.me/hurtmusics' }
         ]
       });
     } catch (e) {
@@ -141,13 +142,16 @@ class DiscordRpcManager {
       ? data.coverUrl
       : (this.appIconUrl || 'logo');
 
+    const albumTag = data.album ? `${data.album} · Hi-Fi Lossless` : 'HurtMusic · Studio Hi-Fi';
+
     const activity = {
       details: (data.title || 'Трек').slice(0, 128),
       state: (data.artist || 'HurtMusic').slice(0, 128),
       largeImageKey: cover,
-      largeImageText: (data.album || 'HurtMusic').slice(0, 128),
+      largeImageText: albumTag.slice(0, 128),
       buttons: [
-        { label: 'Слушать в HurtMusic', url: 'https://t.me/hurtmusics' }
+        { label: 'Слушать в HurtMusic', url: 'https://t.me/hurtmusics' },
+        { label: 'Скачать плеер', url: 'https://t.me/hurtmusics' }
       ]
     };
 
