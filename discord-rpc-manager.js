@@ -104,24 +104,32 @@ class DiscordRpcManager {
   }
 
   /**
+   * Helper to safely update activity on Discord
+   */
+  async setActivity(activity) {
+    if (!this.isConnected || !this.client?.user) return;
+    try {
+      await this.client.user.setActivity(activity);
+    } catch (err) {
+      console.warn('[Discord RPC] Failed to set activity:', err.message);
+    }
+  }
+
+  /**
    * Set Idle presence when no song is playing
    */
   async setIdle() {
-    if (!this.isConnected || !this.client?.user) return;
-    try {
-      await this.client.user.setActivity({
-        details: 'В медиатеке',
-        state: 'Выбирает трек',
-        largeImageKey: this.appIconUrl || 'logo',
-        largeImageText: 'HurtMusic · Studio Hi-Fi',
-        buttons: [
-          { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' },
-          { label: 'Скачать плеер', url: 'https://t.me/hurtmusics' }
-        ]
-      });
-    } catch (e) {
-      console.warn('[Discord RPC] Failed to set idle:', e.message);
-    }
+    this.currentActivity = null;
+    await this.setActivity({
+      details: 'В медиатеке',
+      state: 'Выбирает трек',
+      largeImageKey: this.appIconUrl || 'logo',
+      largeImageText: 'HurtMusic · Studio Hi-Fi',
+      buttons: [
+        { label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' },
+        { label: 'Скачать плеер', url: 'https://t.me/hurtmusics' }
+      ]
+    });
   }
 
   /**
@@ -130,7 +138,6 @@ class DiscordRpcManager {
    */
   async updatePlayback(data) {
     if (!data || !data.title) {
-      this.currentActivity = null;
       return this.setIdle();
     }
 
@@ -172,13 +179,7 @@ class DiscordRpcManager {
     if (nowMs - this.lastUpdateTime < 800) return;
     this.lastUpdateTime = nowMs;
 
-    if (this.isConnected && this.client?.user) {
-      try {
-        await this.client.user.setActivity(activity);
-      } catch (err) {
-        console.warn('[Discord RPC] Failed to update activity:', err.message);
-      }
-    }
+    await this.setActivity(activity);
   }
 
   /**
