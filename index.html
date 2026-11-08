@@ -4,6 +4,131 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>hurtmusic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── Yandex Fluid Mesh Gradient & Organic Morph Animation ── */
+  @keyframes yandexFluidSpin {
+    0% {
+      transform: rotate(0deg) scale(1);
+      border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    }
+    33% {
+      transform: rotate(120deg) scale(1.06);
+      border-radius: 70% 30% 46% 54% / 30% 29% 71% 70%;
+    }
+    66% {
+      transform: rotate(240deg) scale(0.96);
+      border-radius: 30% 70% 70% 30% / 52% 60% 40% 48%;
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
+      border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    }
+  }
+
+  @keyframes yandexAuraPulse {
+    0%, 100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 0.75;
+    }
+    50% {
+      transform: scale(1.15) rotate(180deg);
+      opacity: 0.95;
+    }
+  }
+
+  .yandex-fluid-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto 30px;
+    cursor: pointer;
+  }
+
+  .yandex-fluid-aura {
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #ff007f 0%, #ff8c00 35%, #ffd700 60%, transparent 75%);
+    filter: blur(48px);
+    opacity: 0.8;
+    pointer-events: none;
+    animation: yandexAuraPulse 7s ease-in-out infinite;
+    transition: all 0.5s ease;
+  }
+
+  .yandex-fluid-blob {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle at 30% 30%, #fff7ad 0%, #ffa500 25%, #ff0077 55%, #7b00ff 85%, #ff3b00 100%);
+    box-shadow: 0 16px 50px rgba(255, 60, 0, 0.45), inset 0 0 40px rgba(255, 255, 255, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: yandexFluidSpin 12s linear infinite;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .yandex-fluid-blob.playing {
+    animation-duration: 6s;
+    transform: scale(1.08);
+    box-shadow: 0 20px 70px rgba(255, 60, 0, 0.6), inset 0 0 50px rgba(255, 255, 255, 0.8);
+  }
+
+  .yandex-fluid-content {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .yandex-fluid-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+
+  .yandex-fluid-tune-btn {
+    pointer-events: auto;
+    margin-top: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .yandex-fluid-tune-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.04);
+  }
+</style>
 <style>
   /* ─────────────────────────────────────────────────────────────
      Modern Pure Charcoal Dark UI/UX Palette (Clean Black, Graphite & Accent)
@@ -296,7 +421,9 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Unbounded', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 300;
+    letter-spacing: -0.2px;
     background-color: var(--bg-app);
     color: var(--text-primary);
     display: flex;
@@ -310,6 +437,34 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+  /* ── Native Windows OS Media Notification Card ── */
+  #windows-smtc-toast {
+    position: fixed;
+    top: 48px;
+    right: 24px;
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    background: rgba(20, 20, 22, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    pointer-events: none;
+  }
+  #windows-smtc-toast.show {
+    display: flex;
+    animation: smtcSlideIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  }
+  @keyframes smtcSlideIn {
+    from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 
   /* ── Native Window Titlebar ── */
   #titlebar {
@@ -1464,12 +1619,21 @@
 
     <!-- Right: Minimalist Native Window Controls -->
     <div class="window-controls no-drag">
-      <!-- Theme Switcher Pill -->
-      <button class="theme-toggle-pill" id="theme-btn" onclick="toggleTheme()" title="Переключить тему">
-        <svg id="theme-icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      <!-- Check Updates Pill in Top Header -->
+      <button class="theme-toggle-pill" id="btn-top-ota" onclick="checkOtaUpdate(true)" title="Проверить обновления">
+        <svg id="ota-check-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span id="theme-text">Тёмная тема</span>
+        <span id="btn-check-ota-text">Обновление</span>
+        <span id="ota-version-tag" style="opacity:0.7; font-size:10px;">v1.0.1</span>
+      </button>
+
+      <!-- Settings Pill in Top Header -->
+      <button class="win-btn" id="btn-open-settings" onclick="toggleSettingsModal(true)" title="Настройки">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
       </button>
 
       <!-- Mini-Player HUD Button -->
@@ -1563,75 +1727,15 @@
         </div>
       </div>
 
-      <!-- Resolution & Aspect Ratio Settings Switcher -->
-      <div id="res-settings-box" style="margin-top:auto; margin-bottom:8px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-          <span style="color:var(--text-tertiary); font-weight:500;">Разрешение</span>
-          <span id="res-badge" style="color:var(--text-secondary); font-weight:500; font-size:10px; font-variant-numeric:tabular-nums;">1440×1080</span>
+      <!-- Settings Link at bottom of Sidebar -->
+      <div style="margin-top:auto; padding-top:12px;">
+        <div class="nav-item" onclick="toggleSettingsModal(true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Настройки
         </div>
-        <select id="res-select" onchange="changeResolutionPreset(this.value)" style="width:100%; background:#141415; border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; padding:5px 8px; font-size:11px; font-weight:500; cursor:pointer; outline:none;">
-          <option value="auto">Автоопределение</option>
-          <option value="1440x1080" selected>1440 × 1080 (4:3)</option>
-          <option value="1920x1080">1920 × 1080 (16:9)</option>
-          <option value="1280x720">1280 × 720 (16:9)</option>
-          <option value="1024x768">1024 × 768 (4:3)</option>
-        </select>
-      </div>
-
-      <!-- Theme Switcher in Sidebar -->
-      <div style="margin-bottom:10px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-          <span style="color:var(--text-tertiary); font-weight:500;">Тема оформления</span>
-          <span id="theme-badge" style="color:var(--text-secondary); font-weight:500;">Тёмная</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-          <button id="btn-theme-dark" onclick="setTheme('dark')" style="padding:6px 4px; border-radius:6px; border:1px solid rgba(255,255,255,0.18); background:#232325; color:var(--text-primary); font-size:11px; font-weight:500; cursor:pointer;">
-            Hurt Dark
-          </button>
-          <button id="btn-theme-light" onclick="setTheme('vinyl')" style="padding:6px 4px; border-radius:6px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:11px; font-weight:500; cursor:pointer;">
-            Винил
-          </button>
-        </div>
-      </div>
-
-      <!-- Offline Storage Info Badge -->
-      <div style="padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
-        <p style="color:var(--text-tertiary); font-weight:500; margin-bottom:4px;">Хранилище</p>
-        <p id="downloaded-count-label" style="color:var(--text-secondary); font-size:11.5px; font-variant-numeric:tabular-nums;">
-          0 скачанных треков
-        </p>
-        <p id="storage-size-label" style="margin-top:2px; color:var(--text-tertiary); font-variant-numeric:tabular-nums;">
-          0 МБ на диске
-        </p>
-        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-          <p style="color:var(--text-tertiary); font-size:10px; margin-bottom:3px;">Папка на компьютере:</p>
-          <p id="download-folder-label" style="color:var(--text-secondary); font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="openDownloadFolder()" title="Открыть папку в Проводнике">
-            Загрузка...
-          </p>
-          <div style="display:flex; gap:4px; margin-top:6px;">
-            <button class="win-btn" onclick="changeDownloadFolder()" style="flex:1; height:22px; font-size:10px; padding:0 4px;" title="Выбрать любую свою папку для скачивания треков">
-              Выбрать
-            </button>
-            <button class="win-btn" onclick="openDownloadFolder()" style="flex:1; height:22px; font-size:10px; padding:0 4px;" title="Открыть папку с музыкой в Проводнике Windows">
-              Открыть
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- OTA Updates Info in Sidebar -->
-      <div style="margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--card-bg); border:1px solid var(--border-color); font-size:11px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <span style="color:var(--text-tertiary); font-weight:500;">Обновление</span>
-          <span id="ota-version-tag" style="color:var(--text-secondary); font-weight:500; font-size:11px; font-variant-numeric:tabular-nums;">v1.0.0</span>
-        </div>
-        <p id="ota-sidebar-status" style="color:var(--text-tertiary); font-size:11px; margin-bottom:8px;">
-          Версия актуальна
-        </p>
-        <button id="btn-check-ota" class="win-btn" onclick="checkOtaUpdate(true)" style="width:100%; height:24px; font-size:10.5px; display:flex; align-items:center; justify-content:center; gap:6px;" title="Проверить наличие обновлений на GitHub">
-          <svg id="ota-check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span id="btn-check-ota-text">Проверить обновления</span>
-        </button>
       </div>
     </aside>
 
@@ -1788,44 +1892,19 @@
         </div>
       </div>
 
-      <!-- ── Dedicated My Wave View ── -->
-      <div id="my-wave-view" style="display:none; flex-direction:column; flex:1; min-height:0; overflow:visible; width:100%; min-width:0; padding:16px 32px 32px; box-sizing:border-box;">
-        <div class="my-wave-hero">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; width:100%;">
-            <div>
-              <span class="context-pill" id="wave-mode-badge">Персональный поток</span>
-              <h1 style="font-size:24px; font-weight:600; letter-spacing:-0.3px; margin:4px 0 4px;">Моя волна</h1>
-              <p id="wave-current-source-desc" style="font-size:13px; color:var(--text-secondary); max-width:520px; margin:0;">
-                Бесконечный поток музыки на основе ваших предпочтений
-              </p>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span id="wave-status-text" style="font-size:12px; color:var(--text-tertiary); font-variant-numeric:tabular-nums;">
-                Готова к запуску
-              </span>
-              <button id="wave-sphere-orb" class="wave-action-btn" onclick="toggleMyWavePlayback()" title="Запуск / пауза Волны">
-                <svg id="wave-orb-icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-                <svg id="wave-orb-icon-pause" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Spectral Resonance Harmonics Canvas (Signature Visual) -->
-          <div class="spectral-canvas-wrapper">
-            <canvas id="spectral-wave-canvas"></canvas>
-          </div>
-
-          <!-- Mode Chips -->
-          <div class="wave-mode-chips">
+      <!-- ── Dedicated My Wave View (Yandex Music Style Dynamic Interactive Orb) ── -->
+      <div id="my-wave-view" style="display:none; flex-direction:column; flex:1; min-height:0; overflow-y:auto; width:100%; min-width:0; padding:24px 32px 32px; box-sizing:border-box;">
+        
+        <!-- Yandex-style Central Interactive Ambient Stage -->
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 20px 20px; text-align:center; position:relative;">
+          
+          <!-- Mode Chips Header -->
+          <div class="wave-mode-chips" style="margin-bottom:28px; justify-content:center;">
             <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path>
               </svg>
-              По текущему треку
+              По треку
             </button>
             <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1837,13 +1916,13 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
-              Движ & Энергия
+              Бодрое
             </button>
             <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
-              Чилл & Релакс
+              Спокойное
             </button>
             <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1851,21 +1930,72 @@
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              Свежие релизы
+              Новинки
             </button>
+          </div>
+
+          <!-- Yandex Wave Big Living Fluid Orb -->
+          <div class="yandex-fluid-container" id="wave-sphere-orb" onclick="toggleMyWavePlayback()">
+            <!-- Outer Pulsing Glow Aura -->
+            <div class="yandex-fluid-aura" id="yandex-wave-aura"></div>
+            
+            <!-- Central Dynamic Reactive Fluid Shape -->
+            <div class="yandex-fluid-blob" id="yandex-fluid-blob"></div>
+
+            <!-- Content over the fluid sphere -->
+            <div class="yandex-fluid-content">
+              <div class="yandex-fluid-title">
+                <span id="wave-orb-status-icon">
+                  <svg id="wave-orb-icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  <svg id="wave-orb-icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                  </svg>
+                </span>
+                <span>Моя волна</span>
+              </div>
+              <button class="yandex-fluid-tune-btn" onclick="event.stopPropagation(); document.querySelector('.wave-mode-chips').scrollIntoView({behavior:'smooth'});">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                <span>Настроить</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Current Wave Track Info -->
+          <div style="max-width:480px; min-height:48px;">
+            <h1 id="wave-now-title" style="font-size:20px; font-weight:400; letter-spacing:-0.2px; margin:0 0 4px; color:#fff;">Моя волна</h1>
+            <p id="wave-now-artist" style="font-size:13px; color:var(--text-secondary); margin:0;">
+              Нажмите на сферу, чтобы запустить бесконечный поток музыки
+            </p>
+          </div>
+
+          <!-- Resonance mini canvas hidden or subtle -->
+          <div class="spectral-canvas-wrapper" style="opacity:0.3; height:40px; margin-top:8px;">
+            <canvas id="spectral-wave-canvas"></canvas>
           </div>
         </div>
 
         <!-- Wave Queue Header -->
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 8px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin:20px 8px 14px; flex-shrink:0;">
           <div>
-            <h2 style="font-size:16px; font-weight:600;">Далее в вашей волне</h2>
-            <p id="wave-queue-sublabel" style="font-size:12px; color:var(--text-tertiary); margin-top:2px;">
+            <h2 style="font-size:15px; font-weight:500;">Далее в вашей волне</h2>
+            <p id="wave-queue-sublabel" style="font-size:11.5px; color:var(--text-tertiary); margin-top:2px;">
               Похожие треки подбираются автоматически
             </p>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <button onclick="downloadWaveQueueBatch()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Сохранить всю очередь волны на диск">
+            <button onclick="downloadWaveQueueBatch()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:400; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Сохранить всю очередь волны на диск">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -1873,7 +2003,7 @@
               </svg>
               Скачать поток
             </button>
-            <button onclick="refreshWaveQueue()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <button onclick="refreshWaveQueue()" style="background:#19191b; border:1px solid var(--border-color); color:var(--text-secondary); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:400; cursor:pointer; display:flex; align-items:center; gap:6px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 4v6h-6"></path>
                 <path d="M1 20v-6h6"></path>
@@ -1894,46 +2024,40 @@
 
   <!-- ── 3. BOTTOM PERSISTENT PLAYER BAR ── -->
   <footer id="player-bar">
-    <!-- Left: Current Track Details -->
-    <div id="bar-left" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; max-width:260px; cursor:pointer;" onclick="openFullscreenModal()">
-      <div id="bar-cover-art" class="track-cover-art">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3390EC" stroke-width="2">
+    <!-- Left: Current Track Details (Clean Spotify Track Info) -->
+    <div id="bar-left" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; max-width:280px; cursor:pointer;" onclick="openFullscreenModal()">
+      <div id="bar-cover-art" class="track-cover-art" style="width:44px; height:44px; border-radius:6px; overflow:hidden; background:#222; flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2">
           <path d="M9 18V5l12-2v13"></path>
           <circle cx="6" cy="18" r="3"></circle>
           <circle cx="18" cy="16" r="3"></circle>
         </svg>
       </div>
       <div style="overflow:hidden; min-width:0; flex:1;">
-        <p id="bar-title" style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        <p id="bar-title" style="font-size:13px; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">
           Not Playing
         </p>
-        <p id="bar-artist" style="font-size:12px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          Select a song from library
+        <p id="bar-artist" style="font-size:11px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          Select a song
         </p>
       </div>
-      <button id="bar-heart-btn" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="event.stopPropagation(); toggleCurrentTrackFavorite()" title="В любимые">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-      </button>
-
-      <!-- 1-Click Offline Cache Button -->
-      <button id="bar-download-btn" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="event.stopPropagation(); downloadCurrentPlayingTrack()" title="Сохранить трек офлайн навсегда (1 клик)">
-        <svg id="bar-dl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
+      <!-- Add / Favorite Circle (+) Icon like Spotify -->
+      <button id="bar-heart-btn" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center;" onclick="event.stopPropagation(); toggleCurrentTrackFavorite()" title="Сохранить в любимые">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
         </svg>
       </button>
     </div>
 
-    <!-- Center: Playback Controls & Timeline -->
-    <div id="bar-center" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; flex:2; min-width:0; max-width:620px; width:100%;">
+    <!-- Center: Playback Controls & Timeline (Clean Spotify Style) -->
+    <div id="bar-center" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; flex:2; min-width:0; max-width:640px; width:100%;">
       <!-- Buttons -->
-      <div id="player-buttons-row" style="display:flex; align-items:center; gap:clamp(8px, 1.2vw, 16px); flex-wrap:nowrap;">
+      <div id="player-buttons-row" style="display:flex; align-items:center; gap:18px; flex-wrap:nowrap;">
         <!-- Shuffle -->
-        <button id="btn-shuffle" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleShuffle()" title="Shuffle">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="btn-shuffle" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="toggleShuffle()" title="В случайном порядке">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="16 3 21 3 21 8"></polyline>
             <line x1="4" y1="20" x2="21" y2="3"></line>
             <polyline points="21 16 21 21 16 21"></polyline>
@@ -1942,70 +2066,82 @@
         </button>
 
         <!-- Previous -->
-        <button style="background:transparent; border:none; color:var(--text-primary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="playPrevious()" title="Previous">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <button style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="playPrevious()" title="Предыдущий">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
           </svg>
         </button>
 
-        <!-- Play/Pause -->
-        <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause" style="flex-shrink:0;">
-          <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <!-- Play/Pause (Spotify Style solid white circle) -->
+        <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()" title="Воспроизведение / Пауза" style="width:36px; height:36px; border-radius:50%; background:#fff; color:#000; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.15s, background 0.15s;">
+          <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z"/>
           </svg>
-          <svg id="icon-pause" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <svg id="icon-pause" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
           </svg>
         </button>
 
         <!-- Next -->
-        <button style="background:transparent; border:none; color:var(--text-primary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="playNext()" title="Next">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <button style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="playNext()" title="Следующий">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/>
           </svg>
         </button>
 
         <!-- Repeat -->
-        <button id="btn-repeat" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleRepeat()" title="Repeat">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="btn-repeat" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="toggleRepeat()" title="Повтор">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="17 1 21 5 17 9"></polyline>
             <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
             <polyline points="7 23 3 19 7 15"></polyline>
             <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
           </svg>
         </button>
-
-        <!-- My Wave Pill Button -->
-        <button id="btn-player-wave" class="my-wave-player-pill" onclick="toggleMyWaveMode()" title="Включить / Выключить Мою Волну (Бесконечный поток похожих треков)">
-          <span class="wave-pill-dot"></span>
-          <span>Моя волна</span>
-        </button>
-
-        <!-- Mini-Player HUD Toggle Button -->
-        <button id="btn-pip-bar" class="my-wave-player-pill" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон (Ctrl+Shift+M)" style="gap:5px; padding:5px 9px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
-            <rect x="11" y="8" width="9" height="7" rx="1.5" fill="currentColor"></rect>
-          </svg>
-          <span style="font-size:11px; font-weight:700;">HUD</span>
-        </button>
       </div>
 
       <!-- Scrubber -->
-      <div class="slider-wrapper">
-        <span class="time-label" id="current-time-label">0:00</span>
+      <div class="slider-wrapper" style="width:100%; display:flex; align-items:center; gap:8px;">
+        <span class="time-label" id="current-time-label" style="font-size:11px; color:var(--text-tertiary); min-width:32px; text-align:right;">0:00</span>
         <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1"
                oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)">
-        <span class="time-label" id="duration-label">-0:00</span>
+        <span class="time-label" id="duration-label" style="font-size:11px; color:var(--text-tertiary); min-width:32px; text-align:left;">-0:00</span>
       </div>
     </div>
 
-    <!-- Right: Volume Slider & Fullscreen Toggle -->
-    <div id="bar-right" style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; max-width:260px; justify-content:flex-end;">
-      <!-- Real-Time Audio Visualizer Canvas -->
-      <canvas id="player-visualizer-canvas" width="60" height="18" style="width:60px; height:18px; border-radius:4px; opacity:0.85; flex-shrink:0;" title="Реактивная спектрограмма"></canvas>
+    <!-- Right: Lyrics, Queue, HUD, Volume, Fullscreen (Spotify Layout) -->
+    <div id="bar-right" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; max-width:280px; justify-content:flex-end;">
+      <!-- Lyrics Button: Text / Quotes Icon like Apple & modern Spotify lyrics -->
+      <button id="btn-lyrics-toggle" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="toggleLyricsModal()" title="Текст песни">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          <line x1="8" y1="9" x2="16" y2="9"></line>
+          <line x1="8" y1="13" x2="13" y2="13"></line>
+        </svg>
+      </button>
 
-      <button id="btn-mute" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="toggleMute()">
+      <!-- Queue / Wave Drawer Toggle (Spotify-style list icon) -->
+      <button id="btn-queue-toggle" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="switchView('my-wave')" title="Очередь">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Mini-Player Picture-in-Picture / Devices Toggle (Spotify-style PiP icon) -->
+      <button id="btn-pip-bar" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон (Ctrl+Shift+M)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor"></rect>
+        </svg>
+      </button>
+
+      <!-- Mute & Volume -->
+      <button id="btn-mute" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center;" onclick="toggleMute()">
         <svg id="icon-vol-high" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -2017,12 +2153,13 @@
         </svg>
       </button>
 
-      <div style="width:clamp(50px, 7vw, 85px); min-width:45px;">
+      <div style="width:72px; min-width:50px;">
         <input type="range" id="volume-slider" min="0" max="1" value="0.8" step="0.01" oninput="setVolume(this.value)">
       </div>
 
-      <button id="btn-fs" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; flex-shrink:0;" onclick="openFullscreenModal()" title="Fullscreen Player">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- Fullscreen Player Toggle -->
+      <button id="btn-fs" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onclick="openFullscreenModal()" title="Полноэкранный плеер">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="15 3 21 3 21 9"></polyline>
           <polyline points="9 21 3 21 3 15"></polyline>
           <line x1="21" y1="3" x2="14" y2="10"></line>
@@ -2161,7 +2298,7 @@
   </div>
 
   <!-- ── 5. FLOATING OTA UPDATE CARD (OVER-THE-AIR) ── -->
-  <style>
+<style>
     @keyframes otaFadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -2215,6 +2352,143 @@
 
   <!-- ── 6. TOAST NOTIFICATION ── -->
   <div id="toast" class="toast">Уведомление</div>
+
+  <!-- ── 7. WINDOWS SMTC / MEDIA NOTIFICATION OVERLAY ── -->
+  <div id="windows-smtc-toast">
+    <div id="smtc-cover" style="width:48px; height:48px; border-radius:8px; overflow:hidden; background:#232325; flex-shrink:0;">
+      <img id="smtc-cover-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+    </div>
+    <div style="max-width:240px; overflow:hidden;">
+      <div id="smtc-title" style="font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Трек</div>
+      <div id="smtc-artist" style="font-size:11.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">Исполнитель</div>
+    </div>
+  </div>
+
+  <!-- ── 6. SYNCED LYRICS DRAWER / MODAL ── -->
+  <div id="lyrics-drawer-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,12,0.85); backdrop-filter:blur(24px); z-index:99998; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px;">
+    <!-- Close Lyrics -->
+    <button onclick="toggleLyricsModal(false)" style="position:absolute; top:24px; right:24px; background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div style="max-width:680px; width:100%; height:80vh; display:flex; flex-direction:column; text-align:center;">
+      <!-- Track Meta in Lyrics -->
+      <div style="margin-bottom:24px;">
+        <h2 id="lyrics-track-title" style="font-size:22px; font-weight:500; color:#fff; margin-bottom:4px;">Текст песни</h2>
+        <p id="lyrics-track-artist" style="font-size:13px; color:var(--text-tertiary);">Синхронизированные строки</p>
+      </div>
+
+      <!-- Scrollable Lyrics Container -->
+      <div id="lyrics-lines-container" style="flex:1; overflow-y:auto; padding:20px 0; display:flex; flex-direction:column; gap:18px; scroll-behavior:smooth;">
+        <div style="color:var(--text-tertiary); font-size:15px; margin:auto;">Включите трек для синхронизации текста...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6. SETTINGS MODAL ── -->
+  <div id="settings-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(10px); z-index:99999; align-items:center; justify-content:center;">
+    <div style="width:480px; max-width:90vw; background:#141416; border:1px solid rgba(255,255,255,0.08); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.6); padding:24px; position:relative;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <h2 style="font-size:18px; font-weight:500; color:#fff; margin:0;">Настройки</h2>
+        <button onclick="toggleSettingsModal(false)" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:4px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Settings Content -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        
+        <!-- Theme Setting -->
+        <div style="background:#19191b; border:1px solid var(--border-color); border-radius:10px; padding:12px 14px;">
+          <div style="font-size:13px; font-weight:500; margin-bottom:8px;">Тема оформления</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button id="btn-theme-dark" onclick="setTheme('dark')" style="padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:#232325; color:var(--text-primary); font-size:12px; cursor:pointer;">
+              Hurt Dark
+            </button>
+            <button id="btn-theme-light" onclick="setTheme('vinyl')" style="padding:8px; border-radius:8px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer;">
+              Винил
+            </button>
+          </div>
+        </div>
+
+        <!-- Resolution Setting -->
+        <div style="background:#19191b; border:1px solid var(--border-color); border-radius:10px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:500;">Разрешение экрана</div>
+            <span id="res-badge" style="font-size:11px; color:var(--text-tertiary);">1440×1080</span>
+          </div>
+          <select id="res-select" onchange="changeResolutionPreset(this.value)" style="width:100%; background:#141415; border:1px solid var(--border-color); color:var(--text-primary); border-radius:8px; padding:8px 10px; font-size:12px; cursor:pointer; outline:none;">
+            <option value="auto">Автоопределение</option>
+            <option value="1440x1080" selected>1440 × 1080 (4:3)</option>
+            <option value="1920x1080">1920 × 1080 (16:9)</option>
+            <option value="1280x720">1280 × 720 (16:9)</option>
+            <option value="1024x768">1024 × 768 (4:3)</option>
+          </select>
+        </div>
+
+        <!-- Crossfade Setting -->
+        <div style="background:#19191b; border:1px solid var(--border-color); border-radius:10px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:500;">Плавный переход (Кроссфейд)</div>
+            <span id="crossfade-val-label" style="font-size:11px; color:var(--text-tertiary);">0 сек (Выкл)</span>
+          </div>
+          <p style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">Мягкое перетекание между треками без тишины в конце.</p>
+          <input type="range" id="crossfade-slider" min="0" max="8" value="0" step="1" oninput="changeCrossfade(this.value)">
+        </div>
+
+        <!-- Equalizer Bands Setting -->
+        <div style="background:#19191b; border:1px solid var(--border-color); border-radius:10px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:500;">Аудио эквалайзер & Частоты</div>
+            <span id="eq-bands-label" style="font-size:11px; color:var(--text-tertiary);">8 полос</span>
+          </div>
+
+          <!-- Presets -->
+          <div style="display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; padding-bottom:4px;">
+            <button class="win-btn" onclick="applyEqPreset('flat')" style="flex:1; height:24px; font-size:10.5px; background:#232325; border-radius:6px; min-width:60px;">Flat</button>
+            <button class="win-btn" onclick="applyEqPreset('bass')" style="flex:1; height:24px; font-size:10.5px; background:#232325; border-radius:6px; min-width:60px;">Bass Boost</button>
+            <button class="win-btn" onclick="applyEqPreset('vocal')" style="flex:1; height:24px; font-size:10.5px; background:#232325; border-radius:6px; min-width:60px;">Vocal</button>
+            <button class="win-btn" onclick="applyEqPreset('electronic')" style="flex:1; height:24px; font-size:10.5px; background:#232325; border-radius:6px; min-width:60px;">Club/Phonk</button>
+          </div>
+
+          <!-- Bands count selector 4 to 16 -->
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">
+              <span>Количество частот (полос):</span>
+              <span id="eq-slider-val" style="font-weight:600; color:#fff;">8</span>
+            </div>
+            <input type="range" id="eq-bands-count-slider" min="4" max="16" value="8" step="1" oninput="changeEqBandsCount(this.value)">
+          </div>
+
+          <!-- Interactive Bands Sliders Container -->
+          <div id="eq-sliders-container" style="display:flex; align-items:flex-end; justify-content:space-between; height:90px; gap:6px; padding:6px 0;">
+            <!-- Generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Storage Setting -->
+        <div style="background:#19191b; border:1px solid var(--border-color); border-radius:10px; padding:12px 14px;">
+          <div style="font-size:13px; font-weight:500; margin-bottom:4px;">Хранилище музыки</div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-tertiary); margin-bottom:8px;">
+            <span id="downloaded-count-label">0 скачанных треков</span>
+            <span id="storage-size-label">0 МБ на диске</span>
+          </div>
+          <p id="download-folder-label" style="font-size:11px; color:var(--text-secondary); margin-bottom:10px; word-break:break-all;">Загрузка...</p>
+          <div style="display:flex; gap:8px;">
+            <button class="win-btn" onclick="changeDownloadFolder()" style="flex:1; height:28px; font-size:11px; background:#232325; border-radius:6px;">Выбрать папку</button>
+            <button class="win-btn" onclick="openDownloadFolder()" style="flex:1; height:28px; font-size:11px; background:#232325; border-radius:6px;">Открыть папку</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <!-- ── Scripts ── -->
   <script src="hls.min.js"></script>

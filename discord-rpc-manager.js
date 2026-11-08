@@ -174,11 +174,8 @@ class DiscordRpcManager {
 
     this.currentActivity = activity;
 
-    // Rate-limit Discord RPC updates to avoid spamming the IPC pipe
-    const nowMs = Date.now();
-    if (nowMs - this.lastUpdateTime < 800) return;
-    this.lastUpdateTime = nowMs;
-
+    // Direct instant update without artificial delay
+    this.lastUpdateTime = Date.now();
     await this.setActivity(activity);
   }
 

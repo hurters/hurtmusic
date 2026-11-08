@@ -460,6 +460,7 @@ function initAudioEvents() {
     if (!state.isSeeking && audio.duration) {
       updateScrubberProgress();
     }
+    syncLyricsOnTimeUpdate();
   });
 
   audio.addEventListener('ended', () => {
@@ -515,6 +516,8 @@ async function playTrackDirect(track, pushToHistory = true) {
     track = localDownloaded;
   }
   state.currentPlayingTrack = track;
+  showWindowsMediaNotification(track);
+  syncDiscordRPC();
 
   if (track.isOnline && !track.fileUrl) {
     // Online Stream Playback
@@ -1639,6 +1642,92 @@ function updateMyWaveUI() {
     waveOrbPause.style.display = isPlaying ? 'block' : 'none';
   }
 
+// Mood Palette Detection for Living Wave Orb (Sad / Energetic / Chill / Dark / Neutral)
+function detectTrackMoodPalette(track) {
+  if (!track) {
+    return {
+      blob: 'radial-gradient(circle at 30% 30%, #fff7ad 0%, #ffa500 25%, #ff0077 55%, #7b00ff 85%, #ff3b00 100%)',
+      aura: 'radial-gradient(circle at 40% 40%, #ff007f 0%, #ff8c00 35%, #ffd700 60%, transparent 75%)',
+      shadow: 'rgba(255, 60, 0, 0.45)'
+    };
+  }
+
+  const str = `${track.title || ''} ${track.artist || ''} ${track.genre || ''}`.toLowerCase();
+
+  // 1. Sad / Melancholic / Ambient / Lo-Fi -> Deep Violet, Indigo & Cyber Cyan
+  if (/(sad|cry|hurt|alone|rain|lonely|tears|slow|lo-fi|lofi|melanchol|night|груст|печал|боль|слез|один|ночь|dark)/i.test(str)) {
+    return {
+      blob: 'radial-gradient(circle at 30% 30%, #a5b4fc 0%, #6366f1 25%, #4338ca 55%, #2563eb 85%, #1e1b4b 100%)',
+      aura: 'radial-gradient(circle at 40% 40%, #818cf8 0%, #4f46e5 35%, #06b6d4 60%, transparent 75%)',
+      shadow: 'rgba(99, 102, 241, 0.5)'
+    };
+  }
+
+  // 2. Energetic / Club / Phonk / Fast / Hard -> Fiery Neon Red, Electric Orange & Hot Pink
+  if (/(phonk|drift|bass|club|rave|dance|speed|fast|energy|hyper|rock|metal|hard|огонь|движ|кач)/i.test(str)) {
+    return {
+      blob: 'radial-gradient(circle at 30% 30%, #fef08a 0%, #f97316 25%, #ef4444 55%, #ec4899 85%, #7f1d1d 100%)',
+      aura: 'radial-gradient(circle at 40% 40%, #f43f5e 0%, #ea580c 35%, #eab308 60%, transparent 75%)',
+      shadow: 'rgba(239, 68, 68, 0.55)'
+    };
+  }
+
+  // 3. Chill / Relax / Wave / Summer -> Emerald Green, Turquoise, Lime & Sky Blue
+  if (/(chill|relax|peace|summer|green|breeze|calm|soft|light|релакс|спокой|тишин|лето|тепло)/i.test(str)) {
+    return {
+      blob: 'radial-gradient(circle at 30% 30%, #a7f3d0 0%, #10b981 25%, #06b6d4 55%, #3b82f6 85%, #064e3b 100%)',
+      aura: 'radial-gradient(circle at 40% 40%, #34d399 0%, #0ea5e9 35%, #10b981 60%, transparent 75%)',
+      shadow: 'rgba(16, 185, 129, 0.5)'
+    };
+  }
+
+  // 4. Default / Warm Euphoric (Classic Yandex Golden-Magenta Flame)
+  return {
+    blob: 'radial-gradient(circle at 30% 30%, #fff7ad 0%, #ffa500 25%, #ff0077 55%, #7b00ff 85%, #ff3b00 100%)',
+    aura: 'radial-gradient(circle at 40% 40%, #ff007f 0%, #ff8c00 35%, #ffd700 60%, transparent 75%)',
+    shadow: 'rgba(255, 60, 0, 0.45)'
+  };
+}
+
+  // Update dynamic orb animations and text for Yandex-style living orb
+  const nowTitle = document.getElementById('wave-now-title');
+  const nowArtist = document.getElementById('wave-now-artist');
+  const waveAura = document.getElementById('yandex-wave-aura');
+  const fluidBlob = document.getElementById('yandex-fluid-blob');
+
+  if (state.isMyWaveActive && state.currentPlayingTrack) {
+    if (nowTitle) nowTitle.textContent = state.currentPlayingTrack.title || 'Моя волна';
+    if (nowArtist) nowArtist.textContent = state.currentPlayingTrack.artist || 'В эфире';
+    
+    // Apply dynamic mood colors to blob and ambient aura
+    const palette = detectTrackMoodPalette(state.currentPlayingTrack);
+    if (fluidBlob) {
+      fluidBlob.classList.toggle('playing', isPlaying);
+      fluidBlob.style.background = palette.blob;
+      fluidBlob.style.boxShadow = isPlaying ? `0 20px 70px ${palette.shadow}, inset 0 0 50px rgba(255, 255, 255, 0.8)` : `0 16px 50px ${palette.shadow}, inset 0 0 40px rgba(255, 255, 255, 0.6)`;
+    }
+    if (waveAura) {
+      waveAura.style.background = palette.aura;
+      waveAura.style.opacity = isPlaying ? '1' : '0.6';
+      waveAura.style.transform = isPlaying ? 'scale(1.2)' : 'scale(1)';
+    }
+  } else {
+    if (nowTitle) nowTitle.textContent = 'Моя волна';
+    if (nowArtist) nowArtist.textContent = 'Нажмите на сферу, чтобы запустить бесконечный поток музыки';
+    if (fluidBlob) {
+      fluidBlob.classList.remove('playing');
+      const defPalette = detectTrackMoodPalette(null);
+      fluidBlob.style.background = defPalette.blob;
+      fluidBlob.style.boxShadow = `0 16px 50px ${defPalette.shadow}, inset 0 0 40px rgba(255, 255, 255, 0.6)`;
+    }
+    if (waveAura) {
+      const defPalette = detectTrackMoodPalette(null);
+      waveAura.style.background = defPalette.aura;
+      waveAura.style.opacity = '0.7';
+      waveAura.style.transform = 'scale(1)';
+    }
+  }
+
   if (statusEl) {
     if (state.isMyWaveActive) {
       if (state.currentPlayingTrack) {
@@ -2442,6 +2531,339 @@ async function checkOtaUpdate(manual = false) {
   } finally {
     if (icon) icon.classList.remove('ota-spin');
     if (btnText) btnText.textContent = 'Проверить обновления';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Synced Lyrics Engine (LRCLIB & Karaoke Renderer)
+// ─────────────────────────────────────────────────────────────
+let currentTrackLyrics = []; // [{ time: seconds, text: string }]
+let lyricsSyncInterval = null;
+let currentHighlightedLyricIndex = -1;
+
+function parseLrc(lrcText) {
+  if (!lrcText) return [];
+  const lines = lrcText.split('\n');
+  const result = [];
+  const timeRegex = /\[(\d{2}):(\d{2})\.?(\d{2,3})?\]/;
+
+  for (const line of lines) {
+    const match = timeRegex.exec(line);
+    if (match) {
+      const min = parseInt(match[1], 10);
+      const sec = parseInt(match[2], 10);
+      const ms = match[3] ? parseInt(match[3].padEnd(3, '0').substring(0, 3), 10) : 0;
+      const totalSec = min * 60 + sec + ms / 1000;
+      const text = line.replace(timeRegex, '').trim();
+      if (text) {
+        result.push({ time: totalSec, text });
+      }
+    }
+  }
+  return result.sort((a, b) => a.time - b.time);
+}
+
+async function fetchLyricsForTrack(track) {
+  if (!track) return null;
+  const cleanTitle = (track.title || '').replace(/\(.*\)|\[.*\]/g, '').trim();
+  const cleanArtist = (track.artist || '').replace(/\(.*\)|\[.*\]/g, '').trim();
+  
+  try {
+    const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}&duration=${Math.round(track.duration || 0)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.syncedLyrics || data.plainLyrics || null;
+  } catch (err) {
+    console.warn('[Lyrics] Fetch error:', err.message);
+    return null;
+  }
+}
+
+async function loadAndRenderLyrics() {
+  const container = document.getElementById('lyrics-lines-container');
+  const titleEl = document.getElementById('lyrics-track-title');
+  const artistEl = document.getElementById('lyrics-track-artist');
+
+  if (!state.currentPlayingTrack) {
+    if (container) container.innerHTML = `<div style="color:var(--text-tertiary); font-size:15px; margin:auto;">Включите трек для отображения текста</div>`;
+    return;
+  }
+
+  if (titleEl) titleEl.textContent = state.currentPlayingTrack.title || 'Текст песни';
+  if (artistEl) artistEl.textContent = state.currentPlayingTrack.artist || 'Синхронизированный караоке-текст';
+
+  if (container) {
+    container.innerHTML = `<div style="color:var(--text-tertiary); font-size:14px; margin:auto; display:flex; align-items:center; gap:8px;">
+      <div class="ios-equalizer" style="height:14px;"><span class="bar bar-1"></span><span class="bar bar-2"></span><span class="bar bar-3"></span></div>
+      Ищем слова песни...
+    </div>`;
+  }
+
+  currentTrackLyrics = [];
+  currentHighlightedLyricIndex = -1;
+
+  const rawLyrics = await fetchLyricsForTrack(state.currentPlayingTrack);
+
+  if (!rawLyrics) {
+    if (container) {
+      container.innerHTML = `<div style="color:var(--text-tertiary); font-size:15px; margin:auto; max-width:320px; line-height:1.6;">
+        Увы, но текст для этого трека не нашелся
+      </div>`;
+    }
+    return;
+  }
+
+  if (rawLyrics.includes('[00:')) {
+    currentTrackLyrics = parseLrc(rawLyrics);
+  } else {
+    // Plain lyrics
+    currentTrackLyrics = rawLyrics.split('\n').filter(l => l.trim()).map(text => ({ time: -1, text }));
+  }
+
+  if (currentTrackLyrics.length === 0) {
+    if (container) {
+      container.innerHTML = `<div style="color:var(--text-tertiary); font-size:15px; margin:auto; max-width:320px; line-height:1.6;">
+        Увы, но текст для этого трека не нашелся
+      </div>`;
+    }
+    return;
+  }
+
+  // Render lyric lines
+  if (container) {
+    container.innerHTML = currentTrackLyrics.map((item, idx) => {
+      return `<div class="lyric-line" id="lyric-line-${idx}" onclick="seekToLyric(${item.time})" style="cursor:pointer; font-size:20px; font-weight:400; color:rgba(255,255,255,0.25); transition:all 0.25s ease; padding:8px 12px; border-radius:8px;">
+        ${item.text}
+      </div>`;
+    }).join('');
+  }
+}
+
+function syncLyricsOnTimeUpdate() {
+  if (!currentTrackLyrics || currentTrackLyrics.length === 0) return;
+  const curTime = audio.currentTime;
+  let activeIdx = -1;
+
+  for (let i = 0; i < currentTrackLyrics.length; i++) {
+    if (currentTrackLyrics[i].time !== -1 && curTime >= currentTrackLyrics[i].time) {
+      activeIdx = i;
+    } else if (currentTrackLyrics[i].time > curTime) {
+      break;
+    }
+  }
+
+  if (activeIdx !== -1 && activeIdx !== currentHighlightedLyricIndex) {
+    // Un-highlight previous
+    if (currentHighlightedLyricIndex !== -1) {
+      const prevEl = document.getElementById(`lyric-line-${currentHighlightedLyricIndex}`);
+      if (prevEl) {
+        prevEl.style.color = 'rgba(255,255,255,0.3)';
+        prevEl.style.transform = 'scale(1)';
+        prevEl.style.fontWeight = '400';
+      }
+    }
+
+    currentHighlightedLyricIndex = activeIdx;
+    const curEl = document.getElementById(`lyric-line-${activeIdx}`);
+    if (curEl) {
+      curEl.style.color = '#ffffff';
+      curEl.style.transform = 'scale(1.06)';
+      curEl.style.fontWeight = '600';
+      curEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
+function seekToLyric(time) {
+  if (time >= 0) {
+    audio.currentTime = time;
+    if (audio.paused) audio.play();
+  }
+}
+window.seekToLyric = seekToLyric;
+
+function toggleLyricsModal(force) {
+  const overlay = document.getElementById('lyrics-drawer-overlay');
+  if (!overlay) return;
+  const isShown = overlay.style.display === 'flex';
+  const shouldShow = force !== undefined ? force : !isShown;
+
+  overlay.style.display = shouldShow ? 'flex' : 'none';
+  if (shouldShow) {
+    loadAndRenderLyrics();
+  }
+}
+window.toggleLyricsModal = toggleLyricsModal;
+
+// ─────────────────────────────────────────────────────────────
+// Parametric Multi-Band Equalizer (Web Audio BiquadFilterNodes 4-16 Bands)
+// ─────────────────────────────────────────────────────────────
+let eqFilters = [];
+let eqBandsCount = 8;
+const eqFrequencies16 = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 31, 62, 120, 240, 480, 960];
+
+const eqPresets = {
+  flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  bass: [6, 5, 4, 2, 0, -1, -1, 0, 1, 2, 5, 4, 3, 1, 0, 0],
+  vocal: [-2, -2, -1, 1, 3, 4, 3, 2, 1, 0, -1, 0, 2, 3, 2, 1],
+  electronic: [5, 4, 3, 0, -1, 2, 3, 4, 5, 5, 4, 3, 1, 2, 4, 5]
+};
+
+function initEqualizerChain() {
+  if (!visualizer || !visualizer.audioContext || !visualizer.sourceNode) return;
+  const ctx = visualizer.audioContext;
+
+  // Disconnect existing filters
+  eqFilters.forEach(f => {
+    try { f.disconnect(); } catch (e) {}
+  });
+  eqFilters = [];
+
+  // Generate frequency list for current bands count
+  const minF = 40;
+  const maxF = 16000;
+  const freqs = [];
+  for (let i = 0; i < eqBandsCount; i++) {
+    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / (eqBandsCount - 1))));
+  }
+
+  // Create BiquadFilters
+  for (let i = 0; i < eqBandsCount; i++) {
+    const filter = ctx.createBiquadFilter();
+    filter.type = (i === 0) ? 'lowshelf' : (i === eqBandsCount - 1 ? 'highshelf' : 'peaking');
+    filter.frequency.value = freqs[i];
+    filter.gain.value = 0;
+    filter.Q.value = 1.0;
+    eqFilters.push(filter);
+  }
+
+  // Re-link audio chain: sourceNode -> eqFilters -> analyser -> destination
+  try {
+    visualizer.sourceNode.disconnect();
+  } catch (e) {}
+
+  let prevNode = visualizer.sourceNode;
+  for (let i = 0; i < eqFilters.length; i++) {
+    prevNode.connect(eqFilters[i]);
+    prevNode = eqFilters[i];
+  }
+  prevNode.connect(visualizer.analyser);
+
+  renderEqSliders(freqs);
+}
+
+function renderEqSliders(freqs) {
+  const container = document.getElementById('eq-sliders-container');
+  if (!container) return;
+
+  container.innerHTML = eqFilters.map((filter, idx) => {
+    const fLabel = freqs[idx] >= 1000 ? `${(freqs[idx] / 1000).toFixed(1)}k` : `${freqs[idx]}`;
+    return `
+      <div style="display:flex; flex-direction:column; align-items:center; flex:1; height:100%;">
+        <span style="font-size:9px; color:var(--text-tertiary); margin-bottom:4px;">${fLabel}</span>
+        <input type="range" min="-12" max="12" step="0.5" value="${filter.gain.value}" 
+               orient="vertical" 
+               style="writing-mode:bt-lr; -webkit-appearance:slider-vertical; width:14px; flex:1; cursor:pointer;"
+               oninput="setEqFilterGain(${idx}, this.value)">
+        <span id="eq-gain-val-${idx}" style="font-size:8.5px; color:var(--text-secondary); margin-top:4px;">${Math.round(filter.gain.value)}dB</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function setEqFilterGain(index, val) {
+  if (eqFilters[index]) {
+    eqFilters[index].gain.value = parseFloat(val);
+    const label = document.getElementById(`eq-gain-val-${index}`);
+    if (label) label.textContent = `${parseFloat(val) > 0 ? '+' : ''}${Math.round(val)}dB`;
+  }
+}
+window.setEqFilterGain = setEqFilterGain;
+
+function changeEqBandsCount(count) {
+  eqBandsCount = parseInt(count, 10);
+  const label = document.getElementById('eq-bands-label');
+  const sliderVal = document.getElementById('eq-slider-val');
+  if (label) label.textContent = `${eqBandsCount} полос`;
+  if (sliderVal) sliderVal.textContent = eqBandsCount;
+  initEqualizerChain();
+}
+window.changeEqBandsCount = changeEqBandsCount;
+
+function applyEqPreset(presetName) {
+  const gains = eqPresets[presetName];
+  if (!gains) return;
+  for (let i = 0; i < eqFilters.length; i++) {
+    const targetGain = gains[i % gains.length] || 0;
+    eqFilters[i].gain.value = targetGain;
+    const label = document.getElementById(`eq-gain-val-${i}`);
+    if (label) label.textContent = `${targetGain > 0 ? '+' : ''}${Math.round(targetGain)}dB`;
+  }
+  const minF = 40;
+  const maxF = 16000;
+  const freqs = [];
+  for (let i = 0; i < eqBandsCount; i++) {
+    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / (eqBandsCount - 1))));
+  }
+  renderEqSliders(freqs);
+  showToast(`Эквалайзер: пресет «${presetName}»`);
+}
+window.applyEqPreset = applyEqPreset;
+
+// Toggle Settings Modal
+function toggleSettingsModal(open) {
+  const modal = document.getElementById('settings-modal-overlay');
+  if (modal) {
+    modal.style.display = open ? 'flex' : 'none';
+    if (open) {
+      if (eqFilters.length === 0) {
+        initEqualizerChain();
+      }
+    }
+  }
+}
+window.toggleSettingsModal = toggleSettingsModal;
+
+// ─────────────────────────────────────────────────────────────
+// Windows Media Notification (SMTC UI) & Crossfade Engine
+// ─────────────────────────────────────────────────────────────
+let crossfadeDuration = 0; // seconds (0 = off)
+let smtcHideTimeout = null;
+
+function changeCrossfade(sec) {
+  crossfadeDuration = parseInt(sec, 10);
+  const label = document.getElementById('crossfade-val-label');
+  if (label) {
+    label.textContent = crossfadeDuration > 0 ? `${crossfadeDuration} сек` : '0 сек (Выкл)';
+  }
+}
+window.changeCrossfade = changeCrossfade;
+
+function showWindowsMediaNotification(track) {
+  if (!track) return;
+  const toast = document.getElementById('windows-smtc-toast');
+  const titleEl = document.getElementById('smtc-title');
+  const artistEl = document.getElementById('smtc-artist');
+  const imgEl = document.getElementById('smtc-cover-img');
+
+  if (titleEl) titleEl.textContent = track.title || 'Трек';
+  if (artistEl) artistEl.textContent = track.artist || 'HurtMusic';
+  if (imgEl) {
+    if (track.coverUrl) {
+      imgEl.src = track.coverUrl;
+      imgEl.style.display = 'block';
+    } else {
+      imgEl.style.display = 'none';
+    }
+  }
+
+  if (toast) {
+    toast.classList.add('show');
+    if (smtcHideTimeout) clearTimeout(smtcHideTimeout);
+    smtcHideTimeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3500);
   }
 }
 

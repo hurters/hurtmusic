@@ -1,6 +1,6 @@
 {
   "name": "hurtmusic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Native standalone player for hurtmusic offline & online",
   "main": "main.js",
   "scripts": {
@@ -32,18 +32,8 @@
       "!*.md"
     ],
     "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "hurtmusic"
+      "target": "dir",
+      "signAndEditExecutable": false
     }
   },
   "dependencies": {
