@@ -387,7 +387,6 @@
               <span class="hero-badge" id="hero-badge">SoundCloud Charts</span>
               <h1 id="hero-title">Поиск музыки</h1>
               <p id="hero-subtitle">Стриминг треков и воспроизведение локальной медиатеки</p>
-              <div id="hero-artist-badge"><span id="hero-artist-name">Каталог треков</span></div>
             </div>
           </div>
 
@@ -466,11 +465,26 @@
       <div id="my-wave-view" style="display:none;">
         <div class="wave-stage">
           <div class="wave-chips-bar" id="wave-mood-chips">
-            <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">По треку</button>
-            <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">Мои любимые</button>
-            <button class="wave-chip" id="chip-mode-energetic" onclick="setWaveMood('energetic')">Бодрое</button>
-            <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">Спокойное</button>
-            <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">Новинки</button>
+            <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">
+              <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-sliders"/></svg>
+              <span>По треку</span>
+            </button>
+            <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">
+              <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-heart"/></svg>
+              <span>Мои любимые</span>
+            </button>
+            <button class="wave-chip" id="chip-mode-energetic" onclick="setWaveMood('energetic')">
+              <svg width="13" height="13" style="margin-right:6px;" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Бодрое</span>
+            </button>
+            <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">
+              <svg width="13" height="13" style="margin-right:6px;" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <span>Спокойное</span>
+            </button>
+            <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">
+              <svg width="13" height="13" style="margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Новинки</span>
+            </button>
           </div>
 
           <div class="wave-center-zone">
@@ -478,9 +492,16 @@
               <div class="yandex-ambient-aura" id="yandex-wave-aura"></div>
               <div class="yandex-fluid-sphere" id="yandex-fluid-blob">
                 <canvas id="wave-orb-canvas" class="wave-canvas-overlay" width="300" height="300"></canvas>
-                <div class="wave-orb-center-play">
-                  <svg id="wave-orb-icon-play" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  <svg id="wave-orb-icon-pause" style="display:none;" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <div class="wave-sphere-center-content">
+                  <div class="wave-orb-play-icon-wrap">
+                    <svg id="wave-orb-icon-play" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                    <svg id="wave-orb-icon-pause" style="display:none;" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
+                  </div>
+                  <span class="wave-sphere-title">Моя волна</span>
+                  <button class="wave-tune-btn" onclick="event.stopPropagation(); openWaveSettings();">
+                    <svg width="12" height="12" style="margin-right:4px;"><use href="#icon-sliders"/></svg>
+                    <span>Настроить</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -488,7 +509,6 @@
             <div class="wave-current-track-info">
               <h2 id="wave-now-title">Моя волна</h2>
               <p id="wave-now-artist">Нажмите на сферу, чтобы запустить бесконечный поток музыки</p>
-              <div id="wave-current-source-desc">Персональная рекомендательная волна</div>
             </div>
           </div>
         </div>
@@ -496,8 +516,8 @@
         <div class="wave-bottom-sheet">
           <div class="wave-sheet-header">
             <div>
-              <h3>Далее в волне</h3>
-              <p id="wave-status-text">Готова к запуску · Нажмите на сферу</p>
+              <h3 class="wave-queue-title">Далее в волне</h3>
+              <p id="wave-status-text" class="wave-queue-sub">Готова к запуску · Нажмите на сферу</p>
             </div>
             <div class="wave-sheet-actions">
               <button class="btn" id="btn-refresh-wave" onclick="refreshWaveStream()">
@@ -530,11 +550,8 @@
         </div>
         <p id="bar-artist">Выберите трек</p>
       </div>
-      <button class="icon-btn" id="bar-add-lib-btn" onclick="toggleCurrentTrackFavorite()" title="В медиатеку / избранное" aria-label="В медиатеку">
-        <svg id="bar-plus-icon" width="16" height="16"><use href="#icon-plus"/></svg>
-      </button>
       <button class="icon-btn" id="bar-heart-btn" onclick="toggleCurrentTrackFavorite()" title="В любимые" aria-label="В любимые">
-        <svg id="bar-heart-icon" width="16" height="16"><use href="#icon-heart"/></svg>
+        <svg id="bar-heart-icon" width="18" height="18"><use href="#icon-heart"/></svg>
       </button>
     </div>
 
@@ -547,8 +564,8 @@
           <svg width="16" height="16"><use href="#icon-prev"/></svg>
         </button>
         <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
-          <svg id="icon-play" width="16" height="16"><use href="#icon-play"/></svg>
-          <svg id="icon-pause" style="display:none;" width="16" height="16"><use href="#icon-pause"/></svg>
+          <svg id="bar-icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          <svg id="bar-icon-pause" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
         </button>
         <button class="icon-btn" id="btn-next" onclick="playNext()" title="Следующий трек" aria-label="Следующий трек">
           <svg width="16" height="16"><use href="#icon-next"/></svg>
@@ -560,11 +577,8 @@
 
       <div class="slider-wrapper">
         <span class="time-label" id="current-time-label">0:00</span>
-        <div class="scrubber-bar" id="scrubber-bar">
-          <div class="scrubber-buffered" id="scrubber-buffered"></div>
-          <div class="scrubber-progress" id="scrubber-progress"></div>
-          <div class="scrubber-thumb" id="scrubber-thumb"></div>
-        </div>
+        <input type="range" class="progress-slider" id="progress-slider" min="0" max="100" value="0" step="0.1"
+               oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)" aria-label="Прогресс воспроизведения">
         <span class="time-label" id="duration-label">-0:00</span>
       </div>
     </div>
@@ -593,38 +607,54 @@
   </footer>
 
   <!-- ── Fullscreen Player Overlay ── -->
-  <div id="fs-overlay">
-    <button class="fs-close-btn" onclick="toggleFullscreenPlayer(false)" aria-label="Закрыть полноэкранный плеер">
+  <div id="fs-overlay" style="display:none;">
+    <button class="fs-close-btn" onclick="toggleFullscreenPlayer(false)" title="Закрыть (Esc)" aria-label="Закрыть полноэкранный плеер">
       <svg width="18" height="18"><use href="#icon-close"/></svg>
     </button>
-    <div class="fs-art">
-      <img id="fs-cover-img" src="" alt="" style="display:none;" />
-      <div id="fs-cover-placeholder">
-        <svg width="72" height="72" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
-      </div>
-    </div>
-    <div class="fs-meta">
-      <h1 id="fs-title">Не воспроизводится</h1>
-      <p id="fs-artist">Выберите трек</p>
-    </div>
-    <div class="fs-controls">
-      <div class="fs-slider-wrap">
-        <span class="time-label" id="fs-curr-time">0:00</span>
-        <div class="scrubber-bar" id="fs-scrubber-bar">
-          <div class="scrubber-progress" id="fs-scrubber-progress"></div>
+
+    <div class="fs-center-container">
+      <!-- Vinyl Stage with Album Jacket and Sliding Disc -->
+      <div class="vinyl-stage-fs" id="fs-vinyl-stage">
+        <div class="vinyl-disc-fs" id="fs-vinyl-disc"></div>
+        <div class="album-jacket-fs" id="fs-album-jacket">
+          <img id="fs-cover-img" src="" alt="" style="display:none;" />
+          <div id="fs-cover-placeholder">
+            <svg width="80" height="80" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
+          </div>
         </div>
+      </div>
+
+      <!-- Track Meta -->
+      <div class="fs-meta">
+        <h1 id="fs-title">Не воспроизводится</h1>
+        <p id="fs-artist">Выберите трек</p>
+      </div>
+
+      <!-- Scrubber Slider -->
+      <div class="slider-wrapper fs-slider-wrapper">
+        <span class="time-label" id="fs-cur-time">0:00</span>
+        <input type="range" class="progress-slider" id="fs-progress" min="0" max="100" value="0" step="0.1"
+               oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)" aria-label="Прогресс">
         <span class="time-label" id="fs-dur-time">-0:00</span>
       </div>
-      <div class="fs-btns">
-        <button class="icon-btn" onclick="playPrevious()" aria-label="Предыдущий">
+
+      <!-- Controls with Shuffle, Prev, Play/Pause, Next, Repeat -->
+      <div class="fs-controls">
+        <button class="icon-btn" id="fs-btn-shuffle" onclick="toggleShuffle()" title="Случайный порядок" aria-label="Случайный порядок">
+          <svg width="20" height="20"><use href="#icon-shuffle"/></svg>
+        </button>
+        <button class="icon-btn" id="fs-btn-prev" onclick="playPrevious()" title="Предыдущий трек" aria-label="Предыдущий трек">
           <svg width="24" height="24"><use href="#icon-prev"/></svg>
         </button>
-        <button class="play-toggle-btn" onclick="togglePlayPause()" aria-label="Играть / Пауза">
-          <svg id="fs-icon-play" width="24" height="24"><use href="#icon-play"/></svg>
-          <svg id="fs-icon-pause" style="display:none;" width="24" height="24"><use href="#icon-pause"/></svg>
+        <button class="play-toggle-btn fs-play-btn" id="fs-play-pause-btn" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
+          <svg id="fs-icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          <svg id="fs-icon-pause" style="display:none;" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
         </button>
-        <button class="icon-btn" onclick="playNext()" aria-label="Следующий">
+        <button class="icon-btn" id="fs-btn-next" onclick="playNext()" title="Следующий трек" aria-label="Следующий трек">
           <svg width="24" height="24"><use href="#icon-next"/></svg>
+        </button>
+        <button class="icon-btn" id="fs-btn-repeat" onclick="toggleRepeat()" title="Повтор" aria-label="Повтор">
+          <svg width="20" height="20"><use href="#icon-repeat"/></svg>
         </button>
       </div>
     </div>
@@ -712,8 +742,8 @@
       <div class="settings-content-wrapper">
         <div class="settings-content-header">
           <h2 id="settings-current-tab-title">Внешний вид</h2>
-          <button class="icon-btn" onclick="toggleSettingsModal(false)" aria-label="Закрыть настройки">
-            <svg width="16" height="16"><use href="#icon-close"/></svg>
+          <button class="modal-close-btn" onclick="toggleSettingsModal(false)" aria-label="Закрыть настройки">
+            <svg width="14" height="14"><use href="#icon-close"/></svg>
           </button>
         </div>
 
@@ -747,7 +777,10 @@
                 <div class="setting-title">Экономный режим «Моей волны»</div>
                 <div class="setting-hint" style="margin-bottom:0;">Отключает тяжёлые blur-эффекты и разгружает видеокарту на слабых ПК.</div>
               </div>
-              <input type="checkbox" id="wave-economy-toggle" onchange="toggleWaveEconomyMode(this.checked)" style="width:18px; height:18px; cursor:pointer;">
+              <label class="switch-toggle" for="wave-economy-toggle">
+                <input type="checkbox" id="wave-economy-toggle" onchange="toggleWaveEconomyMode(this.checked)">
+                <span class="switch-slider"></span>
+              </label>
             </div>
           </div>
         </div>

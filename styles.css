@@ -1443,12 +1443,12 @@ body.mini-player-mode #mini-player-hud { display: flex !important; }
   gap: 4px;
 }
 .settings-sidebar-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-tertiary);
-  padding: 6px 10px 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-primary);
+  padding: 8px 12px 10px;
 }
 .settings-tab-btn {
   display: flex;
@@ -1784,4 +1784,400 @@ body.wave-economy-mode #yandex-fluid-blob {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+/* ═════════════════════════════════════════════════════════════
+   V2 POLISH: Close Buttons, Scrubber, Volume, Wave Orb, Fullscreen Vinyl
+   ═════════════════════════════════════════════════════════════ */
+
+/* ---------- Unified Close Buttons (No Browser Default / White Square) ---------- */
+.fs-close-btn,
+.modal-close-btn,
+.ota-close-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+.fs-close-btn:hover,
+.modal-close-btn:hover,
+.ota-close-btn:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
+  transform: scale(1.06) !important;
+}
+.fs-close-btn {
+  position: absolute !important;
+  top: 28px !important;
+  left: 28px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  z-index: 100 !important;
+}
+
+/* ---------- Scrubber Timeline & Volume Slider ---------- */
+.slider-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: 540px !important;
+  flex: 1 !important;
+}
+.time-label {
+  font-size: 11px !important;
+  font-variant-numeric: tabular-nums !important;
+  min-width: 34px !important;
+  color: var(--text-tertiary) !important;
+  user-select: none !important;
+}
+#current-time-label { text-align: right !important; }
+#duration-label { text-align: left !important; }
+
+.progress-slider {
+  flex: 1 !important;
+  height: 16px !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+.volume-slider {
+  width: 104px !important;
+  min-width: 96px !important;
+  flex-shrink: 0 !important;
+  height: 16px !important;
+  cursor: pointer !important;
+}
+
+/* Range input styling with visible thumb handle */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(to right, var(--accent) var(--pct, 0%), rgba(255, 255, 255, 0.14) var(--pct, 0%));
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #ededed;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+input[type='range']:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+  background: #ffffff;
+}
+
+/* Single heart button highlight */
+#bar-heart-btn.active {
+  color: var(--accent) !important;
+}
+#bar-heart-btn.active svg {
+  fill: var(--accent) !important;
+  stroke: var(--accent) !important;
+}
+
+/* ---------- Hero Vinyl & Title Gap (No Overlapping) ---------- */
+.hero-main {
+  display: flex !important;
+  align-items: center !important;
+  gap: 36px !important;
+}
+.hero-text {
+  margin-left: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  z-index: 5 !important;
+}
+
+/* ---------- Fullscreen Center Container & Vinyl Animation ---------- */
+.fs-center-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 580px !important;
+  margin: auto !important;
+  z-index: 10 !important;
+}
+
+.vinyl-stage-fs {
+  position: relative !important;
+  width: 280px !important;
+  height: 280px !important;
+  margin: 0 auto 24px !important;
+}
+.album-jacket-fs {
+  position: relative !important;
+  width: 280px !important;
+  height: 280px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  background: #18181b !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+  z-index: 3 !important;
+}
+.album-jacket-fs img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+#fs-cover-placeholder {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.vinyl-disc-fs {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  width: 260px !important;
+  height: 260px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at center, #18181a 0%, #0d0d0f 30%, #151517 60%, #08080a 100%) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
+  z-index: 1 !important;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: none !important;
+}
+.vinyl-disc-fs::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 20px !important;
+  border-radius: 50% !important;
+  border: 1px dashed rgba(255, 255, 255, 0.08) !important;
+}
+.vinyl-disc-fs::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, var(--accent) 0%, #111 100%) !important;
+  box-shadow: 0 0 0 4px #000 !important;
+}
+
+#fs-vinyl-stage.playing .vinyl-disc-fs {
+  transform: translateX(42%) rotate(360deg) !important;
+  animation: spinVinyl 12s linear infinite 0.6s !important;
+}
+
+@keyframes spinVinyl {
+  from { transform: translateX(42%) rotate(0deg); }
+  to { transform: translateX(42%) rotate(360deg); }
+}
+
+.fs-meta {
+  text-align: center !important;
+  margin-bottom: 8px !important;
+}
+#fs-title {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  margin-bottom: 6px !important;
+}
+#fs-artist {
+  font-size: 14px !important;
+  color: var(--text-secondary) !important;
+}
+
+.fs-slider-wrapper {
+  max-width: 440px !important;
+  margin: 16px 0 !important;
+}
+.fs-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 22px !important;
+  margin-top: 12px !important;
+}
+.fs-controls .icon-btn {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: transform 0.15s ease, color 0.15s ease !important;
+}
+.fs-controls .icon-btn:hover {
+  color: #fff !important;
+  transform: scale(1.1) !important;
+}
+.fs-play-btn {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #141415 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ---------- My Wave: Liquid Morphing Sphere with Center Content ---------- */
+.yandex-fluid-container {
+  width: 250px !important;
+  height: 250px !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  margin: 0 auto !important;
+}
+.yandex-ambient-aura {
+  position: absolute !important;
+  inset: -20px !important;
+  border-radius: 50% !important;
+  filter: blur(50px) !important;
+  opacity: 0.65 !important;
+  background: radial-gradient(circle, #ff6b00 0%, #e11d48 50%, transparent 80%) !important;
+  transition: all 0.5s ease !important;
+  pointer-events: none !important;
+}
+.yandex-fluid-sphere {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 44% 56% 65% 35% / 48% 42% 58% 52% !important;
+  background: linear-gradient(135deg, #ff8a00 0%, #e52e71 50%, #9b51e0 100%) !important;
+  box-shadow: 0 16px 50px rgba(225, 29, 72, 0.4), inset 0 0 40px rgba(255, 255, 255, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: box-shadow 0.4s ease !important;
+  animation: fluidMorph 7s ease-in-out infinite alternate !important;
+}
+@keyframes fluidMorph {
+  0% { border-radius: 44% 56% 65% 35% / 48% 42% 58% 52%; }
+  33% { border-radius: 60% 40% 45% 55% / 55% 65% 35% 45%; }
+  66% { border-radius: 50% 50% 35% 65% / 42% 38% 62% 58%; }
+  100% { border-radius: 44% 56% 65% 35% / 48% 42% 58% 52%; }
+}
+
+.wave-sphere-center-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+.wave-orb-play-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)) !important;
+}
+.wave-sphere-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.2px !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+.wave-tune-btn {
+  pointer-events: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 4px 14px !important;
+  border-radius: 99px !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.15s ease !important;
+}
+.wave-tune-btn:hover {
+  background: rgba(255, 255, 255, 0.32) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Queue typography hierarchy */
+.wave-queue-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  margin: 0 !important;
+}
+.wave-queue-sub {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: var(--text-tertiary) !important;
+  margin-top: 3px !important;
+}
+
+/* ---------- Custom Switch Toggle (Replacing Native Checkboxes) ---------- */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: 0.22s var(--ease);
+}
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: 0.22s var(--ease);
+}
+.switch-toggle input:checked + .switch-slider {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(20px);
 }

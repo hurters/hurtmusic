@@ -742,8 +742,8 @@ function togglePlayPause() {
 function setPlaybackState(isPlaying) {
   state.isPlaying = isPlaying;
 
-  const playIcon = document.getElementById('icon-play');
-  const pauseIcon = document.getElementById('icon-pause');
+  const playIcon = document.getElementById('bar-icon-play') || document.getElementById('icon-play');
+  const pauseIcon = document.getElementById('bar-icon-pause') || document.getElementById('icon-pause');
   const fsPlayIcon = document.getElementById('fs-icon-play');
   const fsPauseIcon = document.getElementById('fs-icon-pause');
   const btnPlayPause = document.getElementById('btn-play-pause');
@@ -807,6 +807,7 @@ function setPlaybackState(isPlaying) {
   syncPlaybackWithMain();
   updateMiniPlayerUI();
 }
+window.setPlaybackState = setPlaybackState;
 
 function syncPlaybackWithMain() {
   if (!window.electronAPI || !window.electronAPI.sendPlaybackState) return;
@@ -1992,17 +1993,55 @@ window.toggleCurrentTrackFavorite = toggleCurrentTrackFavorite;
 // ─────────────────────────────────────────────────────────────
 function openFullscreenModal() {
   const overlay = document.getElementById('fs-overlay');
-  if (overlay) overlay.classList.add('active');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.classList.add('active');
+
+    const track = state.currentPlayingTrack;
+    if (track) {
+      const fsTitle = document.getElementById('fs-title');
+      if (fsTitle) fsTitle.textContent = track.title;
+      const fsArtist = document.getElementById('fs-artist');
+      if (fsArtist) fsArtist.textContent = track.artist;
+      const fsCover = document.getElementById('fs-cover-img');
+      const fsPlaceholder = document.getElementById('fs-cover-placeholder');
+      if (track.coverUrl && fsCover) {
+        fsCover.src = track.coverUrl;
+        fsCover.style.display = 'block';
+        if (fsPlaceholder) fsPlaceholder.style.display = 'none';
+      }
+    }
+    const fsVinylStage = document.getElementById('fs-vinyl-stage');
+    if (fsVinylStage) fsVinylStage.classList.toggle('playing', state.isPlaying);
+    const fsPlayIcon = document.getElementById('fs-icon-play');
+    const fsPauseIcon = document.getElementById('fs-icon-pause');
+    if (fsPlayIcon) fsPlayIcon.style.display = state.isPlaying ? 'none' : 'block';
+    if (fsPauseIcon) fsPauseIcon.style.display = state.isPlaying ? 'block' : 'none';
+    
+    // Update progress
+    updateScrubberProgress();
+  }
 }
 
 function closeFullscreenModal() {
   const overlay = document.getElementById('fs-overlay');
-  if (overlay) overlay.classList.remove('active');
+  if (overlay) {
+    overlay.style.display = 'none';
+    overlay.classList.remove('active');
+  }
 }
 
+function toggleFullscreenPlayer(open) {
+  const overlay = document.getElementById('fs-overlay');
+  if (!overlay) return;
+  const isCurrentlyOpen = overlay.style.display === 'flex' || overlay.classList.contains('active');
+  const shouldOpen = (open !== undefined) ? !!open : !isCurrentlyOpen;
+  if (shouldOpen) openFullscreenModal();
+  else closeFullscreenModal();
+}
 window.openFullscreenModal = openFullscreenModal;
 window.closeFullscreenModal = closeFullscreenModal;
-window.toggleFullscreenPlayer = (open) => { if (open === false) closeFullscreenModal(); else openFullscreenModal(); };
+window.toggleFullscreenPlayer = toggleFullscreenPlayer;
 
 // ─────────────────────────────────────────────────────────────
 // 9. Toast Notification & Helpers
@@ -2810,6 +2849,8 @@ function initOtaUpdater() {
 }
 
 function showOtaCard(updateInfo) {
+  if (!updateInfo || !updateInfo.hasUpdate) return;
+  if (updateInfo.latestVersion === '1.0.1') return; // Do not show if version is current!
   pendingOtaUpdate = updateInfo;
   const card = document.getElementById('ota-modal-card');
   if (!card) return;
@@ -3561,3 +3602,24 @@ setInterval(() => {
     updateLivingWaveSphere();
   }
 }, 33);
+
+function dismissOtaModal() {
+  const card = document.getElementById('ota-modal-card');
+  if (card) card.style.display = 'none';
+}
+window.dismissOtaModal = dismissOtaModal;
+
+function openWaveSettings() {
+  openSettingsModal();
+  switchSettingsTab('appearance');
+}
+window.openWaveSettings = openWaveSettings;
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeFullscreenModal();
+    toggleSettingsModal(false);
+    if (typeof toggleLyricsModal === 'function') toggleLyricsModal(false);
+    dismissOtaModal();
+  }
+});
