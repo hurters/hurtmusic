@@ -1,6 +1,6 @@
 {
   "name": "hurtmusic",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Native standalone player for hurtmusic offline & online",
   "main": "main.js",
   "scripts": {

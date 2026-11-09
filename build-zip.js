@@ -1,12 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
+const pkg = require('./package.json');
 
+const version = pkg.version || '1.1.0';
 const srcDir = path.join(__dirname, 'dist', 'win-unpacked');
-const zipFile = path.join(__dirname, 'dist', 'hurtmusic-v1.0.1-win-x64.zip');
+const zipFile = path.join(__dirname, 'dist', `hurtmusic-v${version}-win-x64.zip`);
+const legacyZipFile = path.join(__dirname, 'dist', 'hurtmusic-v1.0.1-win-x64.zip');
 const tempZip = path.join(__dirname, 'dist', 'hurtmusic-temp.zip');
 
-console.log('--- Packing HurtMusic Win-x64 Zip Archive ---');
+console.log(`--- Packing HurtMusic Win-x64 Zip Archive v${version} ---`);
 console.log('Source:', srcDir);
 console.log('Destination:', zipFile);
 
@@ -21,7 +24,10 @@ output.on('close', () => {
     try { fs.unlinkSync(zipFile); } catch (e) {}
   }
   fs.renameSync(tempZip, zipFile);
-  console.log('SUCCESS: hurtmusic-v1.0.1-win-x64.zip ready with clean root paths!');
+  try {
+    fs.copyFileSync(zipFile, legacyZipFile);
+  } catch (e) {}
+  console.log(`SUCCESS: hurtmusic-v${version}-win-x64.zip ready with clean root paths!`);
 });
 
 archive.on('error', (err) => {
