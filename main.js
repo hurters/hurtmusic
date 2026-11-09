@@ -1,7 +1,18 @@
 const { app, BrowserWindow, ipcMain, dialog, protocol, net, Tray, Menu, nativeImage, screen, globalShortcut, shell } = require('electron');
 const path = require('path');
-const fs = require('fs').promises;
+const os = require('os');
+
 const nodeFs = require('fs');
+
+const isTestMode = process.env.ELECTRON_IS_TEST === '1' || process.argv.includes('--test-mode');
+if (isTestMode) {
+  const testUserData = path.join(os.tmpdir(), 'hm-test-data-' + process.pid + '-' + Date.now());
+  try {
+    nodeFs.mkdirSync(testUserData, { recursive: true });
+    app.setPath('userData', testUserData);
+  } catch {}
+}
+const fs = require('fs').promises;
 const { Readable } = require('stream');
 const laneOnlineEngine = require('./lane-online-engine');
 const discordRpcManager = require('./discord-rpc-manager');
@@ -133,6 +144,7 @@ function createWindow() {
 
   // Minimize to tray on close if tray is active, else exit cleanly
   mainWindow.on('close', (event) => {
+    if (isTestMode) return;
     if (!app.isQuitting) {
       if (tray) {
         event.preventDefault();
@@ -617,7 +629,7 @@ function parseFileNameMetadata(fileName) {
 // ─────────────────────────────────────────────────────────────
 // App Lifecycle & Single Instance Guard
 // ─────────────────────────────────────────────────────────────
-const gotTheLock = app.requestSingleInstanceLock();
+const gotTheLock = isTestMode ? true : app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
   app.quit();
@@ -689,8 +701,10 @@ if (!gotTheLock) {
     });
 
     createWindow();
-    createTray();
-    discordRpcManager.init();
+    if (!isTestMode) {
+      createTray();
+      discordRpcManager.init();
+    }
 
     // Silent background Over-The-Air (OTA) update check
     setTimeout(async () => {

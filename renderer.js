@@ -3,6 +3,47 @@
  * Online streaming & Offline library downloader (No VPN needed)
  */
 
+function formatPlural(n, one, two, five) {
+  const num = Math.abs(Math.floor(n || 0));
+  const mod10 = num % 10;
+  const mod100 = num % 100;
+  if (mod100 >= 11 && mod100 <= 19) {
+    return `${num} ${five}`;
+  }
+  if (mod10 === 1) {
+    return `${num} ${one}`;
+  }
+  if (mod10 >= 2 && mod10 <= 4) {
+    return `${num} ${two}`;
+  }
+  return `${num} ${five}`;
+}
+window.formatPlural = formatPlural;
+
+function getTrackCanonicalId(track) {
+  if (!track) return '';
+  const idStr = String(track.originalId || track.id || '');
+  return idStr.replace(/^local_dl_/, '');
+}
+window.getTrackCanonicalId = getTrackCanonicalId;
+
+function isSameTrack(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.id && b.id && a.id === b.id) return true;
+  const canA = getTrackCanonicalId(a);
+  const canB = getTrackCanonicalId(b);
+  if (canA && canB && canA === canB) return true;
+  return false;
+}
+window.isSameTrack = isSameTrack;
+
+function isTrackCurrentlyPlaying(track) {
+  if (!state.currentPlayingTrack || !track) return false;
+  return isSameTrack(track, state.currentPlayingTrack);
+}
+window.isTrackCurrentlyPlaying = isTrackCurrentlyPlaying;
+
 function loadStoredFavorites() {
   const map = new Map();
   try {
@@ -40,6 +81,7 @@ function loadStoredMute() {
 }
 
 // ── App State ──
+let visualizer = null;
 const state = {
   tracks: [],
   filteredTracks: [],
@@ -49,6 +91,9 @@ const state = {
   downloadingIds: new Set(),
   currentTrackIndex: -1,
   currentPlayingTrack: null,
+  playbackQueue: [],
+  playbackContext: { name: 'online-search', id: null },
+  playbackHistory: [],
   isPlaying: false,
   isSeeking: false,
   shuffle: false,
@@ -74,6 +119,7 @@ const state = {
   waveSeedTrack: null,
   playbackRequestId: 0
 };
+window.state = state;
 
 // ── HTML5 Audio Player & HLS Streamer ──
 const audio = new Audio();
@@ -336,6 +382,7 @@ function toggleTheme() {
 }
 
 window.setTheme = setTheme;
+window.changeTheme = setTheme;
 window.toggleTheme = toggleTheme;
 
 // ─────────────────────────────────────────────────────────────
@@ -623,21 +670,60 @@ async function playTrackDirect(track, pushToHistory = true) {
   renderWaveQueue();
 }
 
-async function playTrack(index) {
-  if (index < 0 || index >= state.filteredTracks.length) return;
+async function playTrackById(trackId, sourceList = null, contextName = null) {
+  if (!trackId) return;
 
-  state.currentTrackIndex = index;
-  // If shuffle is active and user selects a track directly, remove it from pending shuffleQueue
-  if (state.shuffle && Array.isArray(state.shuffleQueue)) {
-    const qIdx = state.shuffleQueue.indexOf(index);
-    if (qIdx !== -1) {
-      state.shuffleQueue.splice(qIdx, 1);
-    }
+  let track = null;
+  const candidates = [
+    ...(Array.isArray(sourceList) ? sourceList : []),
+    ...state.filteredTracks,
+    ...state.downloadedTracks,
+    ...state.onlineTracks,
+    ...Array.from(state.favorites.values()),
+    ...state.myWaveQueue
+  ];
+
+  track = candidates.find(t => isSameTrack(t, { id: trackId })) ||
+          (state.currentPlayingTrack && isSameTrack(state.currentPlayingTrack, { id: trackId }) ? state.currentPlayingTrack : null);
+
+  if (!track) {
+    console.warn('[playTrackById] Track not found for id:', trackId);
+    return;
   }
 
-  const track = state.filteredTracks[index];
+  // Set the playback queue
+  if (Array.isArray(sourceList) && sourceList.length > 0) {
+    state.playbackQueue = [...sourceList];
+  } else if (state.filteredTracks.length > 0 && state.filteredTracks.some(t => isSameTrack(t, track))) {
+    state.playbackQueue = [...state.filteredTracks];
+  } else {
+    state.playbackQueue = [track];
+  }
+
+  state.playbackContext = {
+    name: contextName || state.currentView,
+    title: track.title
+  };
+
+  // Explicit user selection in library exits wave mode!
+  state.isMyWaveActive = false;
+  updateMyWaveUI();
+
+  // If shuffle is active, rebuild shuffle queue for subsequent tracks
+  if (state.shuffle) {
+    buildShuffleQueue(track);
+  }
+
   await playTrackDirect(track, true);
 }
+window.playTrackById = playTrackById;
+
+async function playTrack(index) {
+  if (index < 0 || index >= state.filteredTracks.length) return;
+  const track = state.filteredTracks[index];
+  await playTrackById(track.id, state.filteredTracks, state.currentView);
+}
+window.playTrack = playTrack;
 
 function togglePlayPause() {
   if (state.currentTrackIndex === -1 && state.filteredTracks.length > 0) {
@@ -700,6 +786,7 @@ function setPlaybackState(isPlaying) {
     barCoverArt.classList.toggle('playing', isPlaying);
   }
 
+  const vinyl = document.getElementById('vinyl-record') || document.querySelector('.vinyl-record');
   if (vinyl) {
     vinyl.classList.toggle('playing', isPlaying);
   }
@@ -759,22 +846,20 @@ function syncDiscordRPC() {
 // Ensures no track is repeated until all tracks in the playlist are played,
 // and prevents the current track from immediately replaying.
 // ─────────────────────────────────────────────────────────────
-function buildShuffleQueue(currentPlayingIdx = -1) {
-  const total = state.filteredTracks.length;
-  if (total <= 1) {
-    state.shuffleQueue = total === 1 ? [0] : [];
+function buildShuffleQueue(currentTrack = null) {
+  const queue = state.playbackQueue && state.playbackQueue.length > 0 
+    ? state.playbackQueue 
+    : state.filteredTracks;
+
+  if (!queue || queue.length === 0) {
+    state.shuffleQueue = [];
     return;
   }
 
-  // Create pool of all valid track indices except currentPlayingIdx
-  const pool = [];
-  for (let i = 0; i < total; i++) {
-    if (i !== currentPlayingIdx) {
-      pool.push(i);
-    }
-  }
+  const target = currentTrack || state.currentPlayingTrack;
+  let pool = queue.filter(t => !isSameTrack(t, target));
 
-  // Modern Fisher-Yates shuffle algorithm
+  // Fisher-Yates shuffle
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -789,34 +874,37 @@ function playNext() {
     return;
   }
 
-  if (state.filteredTracks.length === 0) return;
+  const queue = state.playbackQueue && state.playbackQueue.length > 0
+    ? state.playbackQueue
+    : state.filteredTracks;
+
+  if (!queue || queue.length === 0) return;
 
   if (state.shuffle) {
-    // If shuffle queue is exhausted, rebuild pool to loop continuously without immediate repeats
     if (!state.shuffleQueue || state.shuffleQueue.length === 0) {
-      buildShuffleQueue(state.currentTrackIndex);
+      buildShuffleQueue(state.currentPlayingTrack);
     }
-
-    if (!state.shuffleQueue || state.shuffleQueue.length === 0) {
-      // Single track in current playlist
-      if (state.filteredTracks.length > 0) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
+    if (state.shuffleQueue && state.shuffleQueue.length > 0) {
+      const nextTrack = state.shuffleQueue.shift();
+      if (state.currentPlayingTrack) {
+        state.playbackHistory.push(state.currentPlayingTrack);
+        if (state.playbackHistory.length > 100) state.playbackHistory.shift();
       }
+      playTrackDirect(nextTrack, false);
       return;
     }
-
-    const nextIndex = state.shuffleQueue.shift();
-    if (state.currentTrackIndex !== -1) {
-      state.shuffleHistory.push(state.currentTrackIndex);
-      if (state.shuffleHistory.length > 100) state.shuffleHistory.shift();
-    }
-    playTrack(nextIndex);
-    return;
   }
 
-  const nextIndex = (state.currentTrackIndex + 1) % state.filteredTracks.length;
-  playTrack(nextIndex);
+  let currentIdx = queue.findIndex(t => isSameTrack(t, state.currentPlayingTrack));
+  if (currentIdx === -1) currentIdx = 0;
+  const nextIdx = (currentIdx + 1) % queue.length;
+  const nextTrack = queue[nextIdx];
+
+  if (state.currentPlayingTrack) {
+    state.playbackHistory.push(state.currentPlayingTrack);
+    if (state.playbackHistory.length > 100) state.playbackHistory.shift();
+  }
+  playTrackDirect(nextTrack, false);
 }
 
 function playPrevious() {
@@ -835,19 +923,23 @@ function playPrevious() {
     return;
   }
 
-  if (state.filteredTracks.length === 0) return;
-
-  if (state.shuffle && state.shuffleHistory && state.shuffleHistory.length > 0) {
-    const prevIndex = state.shuffleHistory.pop();
-    if (state.currentTrackIndex !== -1) {
-      state.shuffleQueue.unshift(state.currentTrackIndex);
-    }
-    playTrack(prevIndex);
+  if (state.playbackHistory && state.playbackHistory.length > 0) {
+    const prevTrack = state.playbackHistory.pop();
+    playTrackDirect(prevTrack, false);
     return;
   }
 
-  const prevIndex = (state.currentTrackIndex - 1 + state.filteredTracks.length) % state.filteredTracks.length;
-  playTrack(prevIndex);
+  const queue = state.playbackQueue && state.playbackQueue.length > 0
+    ? state.playbackQueue
+    : state.filteredTracks;
+
+  if (!queue || queue.length === 0) return;
+
+  let currentIdx = queue.findIndex(t => isSameTrack(t, state.currentPlayingTrack));
+  if (currentIdx === -1) currentIdx = 0;
+  const prevIdx = (currentIdx - 1 + queue.length) % queue.length;
+  const prevTrack = queue[prevIdx];
+  playTrackDirect(prevTrack, false);
 }
 
 function toggleShuffle() {
@@ -891,8 +983,10 @@ function onScrubInput(val) {
   state.isSeeking = true;
   if (audio.duration) {
     const curTime = (val / 100) * audio.duration;
-    document.getElementById('current-time-label').textContent = formatTime(curTime);
-    document.getElementById('fs-cur-time').textContent = formatTime(curTime);
+    const curLabel = document.getElementById('current-time-label');
+    if (curLabel) curLabel.textContent = formatTime(curTime);
+    const fsCur = document.getElementById('fs-cur-time') || document.getElementById('fs-curr-time');
+    if (fsCur) fsCur.textContent = formatTime(curTime);
   }
   updateSliderStyle('progress-slider', val);
   updateSliderStyle('fs-progress', val);
@@ -926,11 +1020,15 @@ function updateScrubberProgress() {
     updateSliderStyle('fs-progress', pct);
   }
 
-  document.getElementById('current-time-label').textContent = formatTime(audio.currentTime);
+  const curLabel = document.getElementById('current-time-label');
+  if (curLabel) curLabel.textContent = formatTime(audio.currentTime);
   const remaining = Math.max(0, dur - audio.currentTime);
-  document.getElementById('duration-label').textContent = '-' + formatTime(remaining);
-  document.getElementById('fs-cur-time').textContent = formatTime(audio.currentTime);
-  document.getElementById('fs-dur-time').textContent = '-' + formatTime(remaining);
+  const durLabel = document.getElementById('duration-label');
+  if (durLabel) durLabel.textContent = '-' + formatTime(remaining);
+  const fsCur = document.getElementById('fs-cur-time') || document.getElementById('fs-curr-time');
+  if (fsCur) fsCur.textContent = formatTime(audio.currentTime);
+  const fsDur = document.getElementById('fs-dur-time');
+  if (fsDur) fsDur.textContent = '-' + formatTime(remaining);
 }
 
 function initVolume() {
@@ -994,26 +1092,21 @@ function updateSliderStyle(id, pct) {
 // 5. UI Updates & Rendering
 // ─────────────────────────────────────────────────────────────
 function updatePlayerUI(track) {
-  document.getElementById('bar-title').textContent = track.title;
-  document.getElementById('bar-artist').textContent = track.artist + (track.album ? ` · ${track.album}` : '');
+  const barTitle = document.getElementById('bar-title');
+  if (barTitle) barTitle.textContent = track.title;
+  const barArtist = document.getElementById('bar-artist');
+  if (barArtist) barArtist.textContent = track.artist + (track.album ? ` · ${track.album}` : '');
 
-  document.getElementById('fs-title').textContent = track.title;
-  document.getElementById('fs-artist').textContent = track.artist;
+  const fsTitle = document.getElementById('fs-title');
+  if (fsTitle) fsTitle.textContent = track.title;
+  const fsArtist = document.getElementById('fs-artist');
+  if (fsArtist) fsArtist.textContent = track.artist;
 
-  // Hero section updates (Bleood style album presentation)
-  const heroTitle = document.getElementById('hero-title');
-  const heroArtistName = document.getElementById('hero-artist-name');
-  const heroBadge = document.getElementById('hero-badge');
+  // Cover Art handling
   const heroCoverImg = document.getElementById('hero-cover-img');
   const heroPlaceholder = document.getElementById('hero-cover-placeholder');
   const fsCoverImg = document.getElementById('fs-cover-img');
   const fsPlaceholder = document.getElementById('fs-placeholder-icon');
-
-  if (heroTitle && track.title) heroTitle.textContent = track.title;
-  if (heroArtistName && track.artist) heroArtistName.textContent = `By ${track.artist}`;
-  if (heroBadge) heroBadge.textContent = `Album (2026) · ${track.durationFormatted || '3:30'}`;
-
-  // Cover Art handling
   const barCoverArt = document.getElementById('bar-cover-art');
 
   if (track.coverUrl) {
@@ -1069,27 +1162,28 @@ function renderTrackList() {
   const statsLabel = document.getElementById('track-stats-label');
 
   if (statsLabel) {
-    statsLabel.textContent = `${state.filteredTracks.length} треков`;
+    statsLabel.textContent = formatPlural(state.filteredTracks.length, 'трек', 'трека', 'треков');
   }
+
+  if (!container) return;
 
   if (state.filteredTracks.length === 0) {
     container.innerHTML = '';
-    emptyState.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'block';
     return;
   }
 
-  emptyState.style.display = 'none';
+  if (emptyState) emptyState.style.display = 'none';
 
   container.innerHTML = state.filteredTracks.map((track, idx) => {
-    const isPlayingThis = state.currentTrackIndex === idx;
+    const isPlayingThis = isTrackCurrentlyPlaying(track);
     const canonicalId = (track.originalId || track.id).replace('local_dl_', '');
     const isFav = state.favorites.has(canonicalId) || state.favorites.has(track.id);
     const isDown = state.downloadedTracksMap.has(track.id) || (track.originalId && state.downloadedTracksMap.has(track.originalId)) || track.isDownloaded;
     const isDownloading = state.downloadingIds.has(track.id);
-    const sizeMb = track.sizeBytes ? (track.sizeBytes / (1024 * 1024)).toFixed(1) : null;
 
     return `
-      <div class="track-row ${isPlayingThis ? 'now-playing' : ''}" style="--item-idx: ${Math.min(idx, 16)};" onclick="playTrack(${idx})">
+      <div class="track-row ${isPlayingThis ? 'now-playing' : ''}" style="--item-idx: ${Math.min(idx, 16)};" onclick="playTrackById('${escapeHtml(track.id)}')">
         <!-- Number / Animated Equalizer / Play Icon -->
         <div style="width:28px; text-align:center; font-size:12px; color:var(--text-tertiary); font-weight:600; display:flex; align-items:center; justify-content:center;">
           ${isPlayingThis 
@@ -1101,7 +1195,7 @@ function renderTrackList() {
         <!-- Cover Art -->
         <div class="track-cover-art">
           ${track.coverUrl 
-            ? `<img src="${track.coverUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&q=80';" />`
+            ? `<img src="${track.coverUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;" loading="lazy" onerror="this.onerror=null; this.src='cover.jpg';" />`
             : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${isPlayingThis ? '#3390EC' : 'rgba(255,255,255,0.7)'}" stroke-width="2">
                 <path d="M9 18V5l12-2v13"></path>
                 <circle cx="6" cy="18" r="3"></circle>
@@ -1151,13 +1245,11 @@ function renderTrackList() {
           }
         </button>
 
-        <!-- Favorite Heart Button with iOS Spring Pop -->
-        <button id="fav-btn-${canonicalId}"
-                class="fav-heart-btn ${isFav ? 'liked' : ''}"
-                onclick="event.stopPropagation(); toggleFavorite('${track.originalId || track.id}')"
-                title="В любимые"
-                style="color:${isFav ? '#FA243C' : 'var(--text-tertiary)'};">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? '#FA243C' : 'none'}" stroke="currentColor" stroke-width="2">
+        <!-- Favorite Button -->
+        <button onclick="event.stopPropagation(); toggleFavorite('${track.id}')"
+                title="${isFav ? 'В любимых' : 'Добавить в любимые'}"
+                style="background:transparent; border:none; color:${isFav ? '#FA243C' : 'var(--text-tertiary)'}; cursor:pointer; padding:6px; margin-left:2px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </button>
@@ -1171,6 +1263,8 @@ function renderTrackList() {
 // ─────────────────────────────────────────────────────────────
 let searchDebounceTimer = null;
 
+let currentDetailCollection = null; // { type: 'artist'|'album', title, tracks: [] }
+
 async function switchView(viewName) {
   state.currentView = viewName;
   state.isOnlineMode = (viewName === 'online-search');
@@ -1180,6 +1274,7 @@ async function switchView(viewName) {
     mainVp.scrollTop = 0;
   }
 
+  // Exactly one sidebar nav-item active!
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.view === viewName);
   });
@@ -1202,70 +1297,386 @@ async function switchView(viewName) {
     if (standardView) standardView.style.display = 'flex';
   }
 
+  // Hide detail header when switching main views
+  const detailHeader = document.getElementById('collection-detail-header');
+  if (detailHeader) detailHeader.style.display = 'none';
+  const mainHero = document.getElementById('main-hero-card');
+  if (mainHero) mainHero.style.display = 'grid';
+
   const heading = document.getElementById('view-heading');
   const heroBadge = document.getElementById('hero-badge');
   const heroTitle = document.getElementById('hero-title');
   const heroSubtitle = document.getElementById('hero-subtitle');
   const searchInput = document.getElementById('library-search');
   const catBar = document.getElementById('search-categories-bar');
+  const heroFavCount = document.getElementById('hero-fav-count');
+  const heroArtistName = document.getElementById('hero-artist-name');
+
+  const tracksContainer = document.getElementById('tracks-container-view');
+  const artistsGrid = document.getElementById('artists-grid-view');
+  const albumsGrid = document.getElementById('albums-grid-view');
+
   if (catBar) {
     catBar.style.display = (viewName === 'online-search') ? 'flex' : 'none';
   }
 
+  // Contextual search placeholder & headers
   if (viewName === 'online-search') {
     if (heading) heading.textContent = 'Поиск онлайн музыки';
     if (heroBadge) heroBadge.textContent = 'SoundCloud Онлайн';
     if (heroTitle) heroTitle.textContent = 'Поиск музыки';
     if (heroSubtitle) heroSubtitle.textContent = 'Стриминг треков и воспроизведение локальной медиатеки';
-    if (searchInput) searchInput.placeholder = 'Поиск треков, артистов, альбомов...';
+    if (heroArtistName) heroArtistName.textContent = 'SoundCloud каталог';
+    if (searchInput) searchInput.placeholder = 'Поиск на SoundCloud и в библиотеке';
+    if (tracksContainer) tracksContainer.style.display = 'block';
+    if (artistsGrid) artistsGrid.style.display = 'none';
+    if (albumsGrid) albumsGrid.style.display = 'none';
+
     if (!state.onlineTracks.length) {
       await selectSearchCategory(state.selectedCategory || 'trending');
     }
+    applyFilters();
   } else if (viewName === 'downloaded') {
     if (heading) heading.textContent = 'Скачанные треки';
-    if (heroBadge) heroBadge.textContent = 'Медиатека';
+    if (heroBadge) heroBadge.textContent = 'Офлайн';
     if (heroTitle) heroTitle.textContent = 'Скачанные треки';
-    if (heroSubtitle) heroSubtitle.textContent = 'Локальные аудиофайлы на этом устройстве';
-    if (searchInput) searchInput.placeholder = 'Поиск в скачанных...';
+    const countStr = formatPlural(state.downloadedTracks.length, 'трек', 'трека', 'треков');
+    if (heroSubtitle) heroSubtitle.textContent = `Офлайн-медиатека • ${countStr}`;
+    if (heroArtistName) heroArtistName.textContent = 'Локальные файлы';
+    if (searchInput) searchInput.placeholder = 'Поиск по библиотеке';
+    if (tracksContainer) tracksContainer.style.display = 'block';
+    if (artistsGrid) artistsGrid.style.display = 'none';
+    if (albumsGrid) albumsGrid.style.display = 'none';
+
     await loadDownloadedTracks();
+    applyFilters();
   } else if (viewName === 'favorites') {
     if (heading) heading.textContent = 'Любимые треки';
     if (heroBadge) heroBadge.textContent = 'Избранное';
     if (heroTitle) heroTitle.textContent = 'Любимые треки';
-    if (heroSubtitle) heroSubtitle.textContent = 'Личная подборка сохранённых композиций';
+    const countStr = formatPlural(state.favorites.size, 'трек', 'трека', 'треков');
+    if (heroSubtitle) heroSubtitle.textContent = `Ваша подборка • ${countStr}`;
+    if (heroArtistName) heroArtistName.textContent = 'Личная коллекция';
+    if (searchInput) searchInput.placeholder = 'Поиск по библиотеке';
+    if (tracksContainer) tracksContainer.style.display = 'block';
+    if (artistsGrid) artistsGrid.style.display = 'none';
+    if (albumsGrid) albumsGrid.style.display = 'none';
+
+    applyFilters();
   } else if (viewName === 'artists') {
     if (heading) heading.textContent = 'Исполнители';
     if (heroBadge) heroBadge.textContent = 'Артисты';
     if (heroTitle) heroTitle.textContent = 'Исполнители';
-    if (heroSubtitle) heroSubtitle.textContent = 'Каталог исполнителей медиатеки';
+    if (heroSubtitle) heroSubtitle.textContent = 'Каталог музыкантов вашей медиатеки';
+    if (heroArtistName) heroArtistName.textContent = 'Каталог исполнителей';
+    if (searchInput) searchInput.placeholder = 'Поиск по библиотеке';
+    if (tracksContainer) tracksContainer.style.display = 'none';
+    if (artistsGrid) artistsGrid.style.display = 'block';
+    if (albumsGrid) albumsGrid.style.display = 'none';
+
+    renderArtistsGrid();
   } else if (viewName === 'albums') {
     if (heading) heading.textContent = 'Альбомы';
     if (heroBadge) heroBadge.textContent = 'Альбомы';
-    if (heroTitle) heroTitle.textContent = 'Все Альбомы';
-    if (heroSubtitle) heroSubtitle.textContent = 'Группировка по альбомам.';
+    if (heroTitle) heroTitle.textContent = 'Все альбомы';
+    if (heroSubtitle) heroSubtitle.textContent = 'Альбомные релизы и подборки';
+    if (heroArtistName) heroArtistName.textContent = 'Коллекция релизов';
+    if (searchInput) searchInput.placeholder = 'Поиск по библиотеке';
+    if (tracksContainer) tracksContainer.style.display = 'none';
+    if (artistsGrid) artistsGrid.style.display = 'none';
+    if (albumsGrid) albumsGrid.style.display = 'block';
+
+    renderAlbumsGrid();
   }
 
-  applyFilters();
+  // Update hero counter with real data or hide
+  if (heroFavCount) {
+    if (viewName === 'favorites') {
+      heroFavCount.textContent = state.favorites.size;
+      heroFavCount.style.display = state.favorites.size > 0 ? 'inline' : 'none';
+    } else if (viewName === 'downloaded') {
+      heroFavCount.textContent = state.downloadedTracks.length;
+      heroFavCount.style.display = state.downloadedTracks.length > 0 ? 'inline' : 'none';
+    } else {
+      heroFavCount.style.display = 'none';
+    }
+  }
 
-  const tracksContainer = document.querySelector('.tracks-container');
   if (tracksContainer) {
     tracksContainer.style.animation = 'none';
     void tracksContainer.offsetWidth;
     tracksContainer.style.animation = 'iosContentSlideIn 0.35s var(--ios-spring)';
   }
 }
+window.switchView = switchView;
+
+function renderArtistsGrid() {
+  const grid = document.getElementById('artists-grid');
+  const empty = document.getElementById('artists-empty-state');
+  const stats = document.getElementById('artists-stats-label');
+  if (!grid) return;
+
+  const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
+  const artistMap = new Map();
+
+  for (const t of allTracks) {
+    const artist = (t.artist || 'Неизвестный исполнитель').trim();
+    if (!artistMap.has(artist)) {
+      artistMap.set(artist, {
+        name: artist,
+        avatar: t.coverUrl || '',
+        tracks: []
+      });
+    }
+    const item = artistMap.get(artist);
+    if (!item.tracks.some(existing => isSameTrack(existing, t))) {
+      item.tracks.push(t);
+    }
+    if (!item.avatar && t.coverUrl) {
+      item.avatar = t.coverUrl;
+    }
+  }
+
+  let artists = Array.from(artistMap.values());
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    artists = artists.filter(a => a.name.toLowerCase().includes(q));
+  }
+  artists.sort((a, b) => b.tracks.length - a.tracks.length || a.name.localeCompare(b.name));
+
+  if (stats) stats.textContent = formatPlural(artists.length, 'исполнитель', 'исполнителя', 'исполнителей');
+
+  if (artists.length === 0) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  grid.innerHTML = artists.map((a, i) => {
+    const initials = a.name.slice(0, 2).toUpperCase();
+    const countStr = formatPlural(a.tracks.length, 'трек', 'трека', 'треков');
+    return `
+      <div class="artist-card" onclick="openArtistDetail('${escapeHtml(a.name)}')">
+        ${a.avatar 
+          ? `<img src="${a.avatar}" class="artist-avatar" loading="lazy" onerror="this.outerHTML='<div class=\\\'artist-avatar-placeholder\\\'>${initials}</div>';" />`
+          : `<div class="artist-avatar-placeholder">${initials}</div>`
+        }
+        <div class="artist-card-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</div>
+        <div class="artist-card-count">${countStr}</div>
+      </div>
+    `;
+  }).join('');
+}
+window.renderArtistsGrid = renderArtistsGrid;
+
+function openArtistDetail(artistName) {
+  const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
+  const tracks = allTracks.filter(t => (t.artist || '').trim().toLowerCase() === artistName.trim().toLowerCase());
+  const seen = new Set();
+  const uniqueTracks = [];
+  for (const t of tracks) {
+    const can = getTrackCanonicalId(t);
+    if (!seen.has(can)) {
+      seen.add(can);
+      uniqueTracks.push(t);
+    }
+  }
+
+  currentDetailCollection = {
+    type: 'artist',
+    title: artistName,
+    tracks: uniqueTracks
+  };
+
+  const header = document.getElementById('collection-detail-header');
+  const mainHero = document.getElementById('main-hero-card');
+  const tracksView = document.getElementById('tracks-container-view');
+  const artistsView = document.getElementById('artists-grid-view');
+  const albumsView = document.getElementById('albums-grid-view');
+
+  if (artistsView) artistsView.style.display = 'none';
+  if (albumsView) albumsView.style.display = 'none';
+  if (mainHero) mainHero.style.display = 'none';
+
+  if (header) {
+    header.style.display = 'flex';
+    document.getElementById('detail-back-text').textContent = 'Назад к исполнителям';
+    document.getElementById('detail-title').textContent = artistName;
+    document.getElementById('detail-subtitle').textContent = `Исполнитель • ${formatPlural(uniqueTracks.length, 'трек', 'трека', 'треков')}`;
+    const artContainer = document.getElementById('detail-art-container');
+    const firstCover = uniqueTracks.find(t => t.coverUrl)?.coverUrl;
+    if (artContainer) {
+      artContainer.innerHTML = firstCover
+        ? `<img src="${firstCover}" class="detail-avatar-round" />`
+        : `<div class="detail-avatar-round" style="display:flex;align-items:center;justify-content:center;background:#3390EC;color:#fff;font-size:24px;font-weight:600;">${artistName.slice(0, 2).toUpperCase()}</div>`;
+    }
+  }
+
+  if (tracksView) tracksView.style.display = 'block';
+  state.filteredTracks = uniqueTracks;
+  renderTrackList();
+}
+window.openArtistDetail = openArtistDetail;
+
+function renderAlbumsGrid() {
+  const grid = document.getElementById('albums-grid');
+  const empty = document.getElementById('albums-empty-state');
+  const stats = document.getElementById('albums-stats-label');
+  if (!grid) return;
+
+  const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
+  const albumMap = new Map();
+
+  for (const t of allTracks) {
+    const albumName = (t.album || '').trim();
+    if (!albumName || albumName === 'SoundCloud Online' || albumName === 'hurtmusic' || albumName === 'Скачано' || albumName === 'Онлайн') {
+      continue;
+    }
+    const key = `${albumName}___${t.artist || ''}`;
+    if (!albumMap.has(key)) {
+      albumMap.set(key, {
+        title: albumName,
+        artist: t.artist || '',
+        cover: t.coverUrl || '',
+        year: t.year || null,
+        tracks: []
+      });
+    }
+    const item = albumMap.get(key);
+    if (!item.tracks.some(existing => isSameTrack(existing, t))) {
+      item.tracks.push(t);
+    }
+    if (!item.cover && t.coverUrl) {
+      item.cover = t.coverUrl;
+    }
+  }
+
+  let albums = Array.from(albumMap.values());
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    albums = albums.filter(a => a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q));
+  }
+  albums.sort((a, b) => b.tracks.length - a.tracks.length || a.title.localeCompare(b.title));
+
+  if (stats) stats.textContent = formatPlural(albums.length, 'альбом', 'альбома', 'альбомов');
+
+  if (albums.length === 0) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  grid.innerHTML = albums.map(alb => {
+    const countStr = formatPlural(alb.tracks.length, 'трек', 'трека', 'треков');
+    return `
+      <div class="album-card" onclick="openAlbumDetail('${escapeHtml(alb.title)}')">
+        <img src="${alb.cover || 'cover.jpg'}" class="album-cover" loading="lazy" onerror="this.onerror=null; this.src='cover.jpg';" />
+        <div class="album-card-title" title="${escapeHtml(alb.title)}">${escapeHtml(alb.title)}</div>
+        <div class="album-card-meta">${escapeHtml(alb.artist)}${alb.year ? ' • ' + alb.year : ''} • ${countStr}</div>
+      </div>
+    `;
+  }).join('');
+}
+window.renderAlbumsGrid = renderAlbumsGrid;
+
+function openAlbumDetail(albumTitle) {
+  const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
+  const tracks = allTracks.filter(t => (t.album || '').trim().toLowerCase() === albumTitle.trim().toLowerCase());
+  const seen = new Set();
+  const uniqueTracks = [];
+  for (const t of tracks) {
+    const can = getTrackCanonicalId(t);
+    if (!seen.has(can)) {
+      seen.add(can);
+      uniqueTracks.push(t);
+    }
+  }
+
+  currentDetailCollection = {
+    type: 'album',
+    title: albumTitle,
+    tracks: uniqueTracks
+  };
+
+  const header = document.getElementById('collection-detail-header');
+  const mainHero = document.getElementById('main-hero-card');
+  const tracksView = document.getElementById('tracks-container-view');
+  const artistsView = document.getElementById('artists-grid-view');
+  const albumsView = document.getElementById('albums-grid-view');
+
+  if (artistsView) artistsView.style.display = 'none';
+  if (albumsView) albumsView.style.display = 'none';
+  if (mainHero) mainHero.style.display = 'none';
+
+  if (header) {
+    header.style.display = 'flex';
+    document.getElementById('detail-back-text').textContent = 'Назад к альбомам';
+    document.getElementById('detail-title').textContent = albumTitle;
+    const artist = uniqueTracks[0]?.artist || '';
+    document.getElementById('detail-subtitle').textContent = `${artist ? artist + ' • ' : ''}${formatPlural(uniqueTracks.length, 'трек', 'трека', 'треков')}`;
+    const artContainer = document.getElementById('detail-art-container');
+    const firstCover = uniqueTracks.find(t => t.coverUrl)?.coverUrl;
+    if (artContainer) {
+      artContainer.innerHTML = `<img src="${firstCover || 'cover.jpg'}" class="detail-cover-square" onerror="this.src='cover.jpg';" />`;
+    }
+  }
+
+  if (tracksView) tracksView.style.display = 'block';
+  state.filteredTracks = uniqueTracks;
+  renderTrackList();
+}
+window.openAlbumDetail = openAlbumDetail;
+
+function navigateBackFromDetail() {
+  const header = document.getElementById('collection-detail-header');
+  if (header) header.style.display = 'none';
+
+  if (currentDetailCollection && currentDetailCollection.type === 'artist') {
+    switchView('artists');
+  } else if (currentDetailCollection && currentDetailCollection.type === 'album') {
+    switchView('albums');
+  } else {
+    switchView('downloaded');
+  }
+  currentDetailCollection = null;
+}
+window.navigateBackFromDetail = navigateBackFromDetail;
+
+function playCurrentDetailCollection(shuffle = false) {
+  if (!currentDetailCollection || !currentDetailCollection.tracks.length) return;
+  state.playbackQueue = [...currentDetailCollection.tracks];
+  state.filteredTracks = [...currentDetailCollection.tracks];
+  state.playbackContext = { name: currentDetailCollection.type, title: currentDetailCollection.title };
+  state.isMyWaveActive = false;
+  updateMyWaveUI();
+
+  if (shuffle) {
+    state.shuffle = true;
+    updateShuffleUI();
+    const randomIdx = Math.floor(Math.random() * currentDetailCollection.tracks.length);
+    const track = currentDetailCollection.tracks[randomIdx];
+    buildShuffleQueue(track);
+    playTrackDirect(track, true);
+  } else {
+    playTrackById(currentDetailCollection.tracks[0].id, currentDetailCollection.tracks, currentDetailCollection.title);
+  }
+}
+window.playCurrentDetailCollection = playCurrentDetailCollection;
+
 
 async function selectSearchCategory(category) {
   state.selectedCategory = category;
 
-  // Clear text search input if category is selected
   const searchInput = document.getElementById('library-search');
   if (searchInput && state.searchQuery) {
     searchInput.value = '';
     state.searchQuery = '';
   }
 
-  // Update button active state
   document.querySelectorAll('.category-pill').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.category === category);
   });
@@ -1299,7 +1710,7 @@ async function selectSearchCategory(category) {
   };
 
   const meta = categoryMeta[category] || categoryMeta['trending'];
-  showToast(`Загрузка: ${meta.title}...`);
+  showToast('Загрузка: ' + meta.title + '...');
 
   const heroBadge = document.getElementById('hero-badge');
   const heroTitle = document.getElementById('hero-title');
@@ -1316,7 +1727,7 @@ async function selectSearchCategory(category) {
   }
 
   state.onlineTracks = results || [];
-  showToast(`Загружено ${state.onlineTracks.length} треков`);
+  showToast('Загружено ' + state.onlineTracks.length + ' треков');
 
   applyFilters();
 
@@ -1327,6 +1738,7 @@ async function selectSearchCategory(category) {
     tracksContainer.style.animation = 'iosContentSlideIn 0.35s var(--ios-spring)';
   }
 }
+window.selectSearchCategory = selectSearchCategory;
 
 function handleSearch(query) {
   state.searchQuery = (query || '').trim();
@@ -1335,10 +1747,18 @@ function handleSearch(query) {
     clearBtn.style.display = (query && query.length > 0) ? 'flex' : 'none';
   }
 
-  if (state.isOnlineMode) {
+  if (state.currentView === 'artists') {
+    renderArtistsGrid();
+    return;
+  }
+  if (state.currentView === 'albums') {
+    renderAlbumsGrid();
+    return;
+  }
+
+  if (state.isOnlineMode && state.currentView === 'online-search') {
     clearTimeout(searchDebounceTimer);
     if (!state.searchQuery) {
-      // Immediate reset without debounce lag
       selectSearchCategory(state.selectedCategory || 'trending');
     } else {
       searchDebounceTimer = setTimeout(() => {
@@ -1349,6 +1769,7 @@ function handleSearch(query) {
     applyFilters();
   }
 }
+window.handleSearch = handleSearch;
 
 function clearSearchInput() {
   const input = document.getElementById('library-search');
@@ -1361,13 +1782,18 @@ function clearSearchInput() {
     clearBtn.style.display = 'none';
   }
   state.searchQuery = '';
-  if (state.isOnlineMode) {
+  if (state.currentView === 'artists') {
+    renderArtistsGrid();
+  } else if (state.currentView === 'albums') {
+    renderAlbumsGrid();
+  } else if (state.isOnlineMode && state.currentView === 'online-search') {
     clearTimeout(searchDebounceTimer);
     selectSearchCategory(state.selectedCategory || 'trending');
   } else {
     applyFilters();
   }
 }
+window.clearSearchInput = clearSearchInput;
 
 async function performOnlineSearch(query) {
   const q = (query || '').trim();
@@ -1375,22 +1801,21 @@ async function performOnlineSearch(query) {
     return selectSearchCategory(state.selectedCategory || 'trending');
   }
 
-  // Deactivate category pills since user typed custom search
   document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
 
-  showToast(`Поиск: ${q}...`);
+  showToast('Поиск: ' + q + '...');
 
   const heroBadge = document.getElementById('hero-badge');
   const heroTitle = document.getElementById('hero-title');
   const heroSubtitle = document.getElementById('hero-subtitle');
   if (heroBadge) heroBadge.textContent = 'Поиск SoundCloud';
-  if (heroTitle) heroTitle.textContent = `Результаты: ${q}`;
+  if (heroTitle) heroTitle.textContent = 'Результаты: ' + q;
   if (heroSubtitle) heroSubtitle.textContent = 'Оригинальные треки без спама, старых сборников и 1-часовых миксов.';
 
   if (window.electronAPI && window.electronAPI.searchOnline) {
     const results = await window.electronAPI.searchOnline(q);
     state.onlineTracks = results || [];
-    showToast(`Найдено ${state.onlineTracks.length} треков`);
+    showToast('Найдено ' + state.onlineTracks.length + ' треков');
   } else {
     showToast('Требуется запуск в приложении Electron');
   }
@@ -1404,6 +1829,7 @@ async function performOnlineSearch(query) {
     tracksContainer.style.animation = 'iosContentSlideIn 0.35s var(--ios-spring)';
   }
 }
+window.performOnlineSearch = performOnlineSearch;
 
 function applyFilters() {
   let list = [];
@@ -1414,15 +1840,20 @@ function applyFilters() {
     list = [...state.downloadedTracks];
   } else if (state.currentView === 'favorites') {
     list = Array.from(state.favorites.values());
+  } else if (state.currentView === 'artists') {
+    renderArtistsGrid();
+    return;
+  } else if (state.currentView === 'albums') {
+    renderAlbumsGrid();
+    return;
   } else {
-    // Artists / Albums
     const all = [...state.downloadedTracks, ...state.onlineTracks];
     const unique = new Map();
     for (const t of all) unique.set(t.id, t);
     list = Array.from(unique.values());
   }
 
-  // Local Search Filter if inside offline/downloaded/favorites views
+  // Local search filter
   if (!state.isOnlineMode && state.searchQuery) {
     const q = state.searchQuery.toLowerCase();
     list = list.filter(t => 
@@ -1432,17 +1863,7 @@ function applyFilters() {
     );
   }
 
-  // Sorting
-  if (state.currentView === 'artists') {
-    list.sort((a, b) => a.artist.localeCompare(b.artist));
-  } else if (state.currentView === 'albums') {
-    list.sort((a, b) => (a.album || '').localeCompare(b.album || ''));
-  }
-
   state.filteredTracks = list;
-  if (state.shuffle) {
-    buildShuffleQueue(state.currentTrackIndex);
-  }
   renderTrackList();
 }
 
@@ -1527,6 +1948,10 @@ function updateFavoriteButtonUI(trackId) {
   if (barHeart) {
     barHeart.style.color = isFav ? '#FA243C' : 'var(--text-tertiary)';
     barHeart.classList.toggle('liked', isFav);
+  const barPlus = document.getElementById('bar-add-lib-btn');
+  if (barPlus) {
+    barPlus.style.color = isFav ? '#FA243C' : 'var(--text-tertiary)';
+  }
     const svg = barHeart.querySelector('svg');
     if (svg) {
       svg.setAttribute('fill', isFav ? '#FA243C' : 'none');
@@ -1577,23 +2002,34 @@ function closeFullscreenModal() {
 
 window.openFullscreenModal = openFullscreenModal;
 window.closeFullscreenModal = closeFullscreenModal;
+window.toggleFullscreenPlayer = (open) => { if (open === false) closeFullscreenModal(); else openFullscreenModal(); };
 
 // ─────────────────────────────────────────────────────────────
 // 9. Toast Notification & Helpers
 // ─────────────────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
+  const container = document.getElementById('toast-container');
+  if (!container) return;
 
-  toast.textContent = msg;
-  toast.classList.add('show', 'visible');
+  while (container.children.length >= 3) {
+    container.removeChild(container.firstChild);
+  }
 
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('show', 'visible');
-  }, 2400);
+  const item = document.createElement('div');
+  item.className = 'toast-msg';
+  item.textContent = msg;
+  container.appendChild(item);
+
+  setTimeout(() => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(8px) scale(0.96)';
+    setTimeout(() => {
+      if (item.parentNode) item.parentNode.removeChild(item);
+    }, 250);
+  }, 2200);
 }
+window.showToast = showToast;
 
 function formatTime(seconds) {
   if (isNaN(seconds) || seconds < 0 || !isFinite(seconds)) return '0:00';
@@ -1694,6 +2130,7 @@ function detectTrackMoodPalette(track) {
   const nowArtist = document.getElementById('wave-now-artist');
   const waveAura = document.getElementById('yandex-wave-aura');
   const fluidBlob = document.getElementById('yandex-fluid-blob');
+  const isPlaying = !!state.isPlaying;
 
   if (state.isMyWaveActive && state.currentPlayingTrack) {
     if (nowTitle) nowTitle.textContent = state.currentPlayingTrack.title || 'Моя волна';
@@ -2096,8 +2533,6 @@ window.toggleShuffle = toggleShuffle;
 // ─────────────────────────────────────────────────────────────
 // Real-Time Audio Visualizer Engine
 // ─────────────────────────────────────────────────────────────
-let visualizer = null;
-
 function initVisualizer() {
   try {
     if (window.AudioVisualizer && window.AudioVisualizer.Visualizer) {
@@ -2696,49 +3131,74 @@ function toggleLyricsModal(force) {
 }
 window.toggleLyricsModal = toggleLyricsModal;
 
+
 // ─────────────────────────────────────────────────────────────
-// Parametric Multi-Band Equalizer (Web Audio BiquadFilterNodes 4-16 Bands)
+// 12. Studio Interactive Equalizer & Web Audio Filter Chain
 // ─────────────────────────────────────────────────────────────
 let eqFilters = [];
 let eqBandsCount = 8;
-const eqFrequencies16 = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 31, 62, 120, 240, 480, 960];
+let eqState = {
+  enabled: true,
+  bandsCount: 8,
+  preset: 'flat',
+  gains: [0, 0, 0, 0, 0, 0, 0, 0]
+};
+window.eqState = eqState;
+window.eqFilters = eqFilters;
+
+try {
+  const saved = localStorage.getItem('hurtmusic_eq_state_v3');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object') {
+      eqState = { ...eqState, ...parsed };
+      eqBandsCount = eqState.bandsCount || 8;
+    }
+  }
+} catch (e) {}
+
+function saveEqState() {
+  try {
+    localStorage.setItem('hurtmusic_eq_state_v3', JSON.stringify(eqState));
+  } catch (e) {}
+}
 
 const eqPresets = {
   flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  bass: [6, 5, 4, 2, 0, -1, -1, 0, 1, 2, 5, 4, 3, 1, 0, 0],
-  vocal: [-2, -2, -1, 1, 3, 4, 3, 2, 1, 0, -1, 0, 2, 3, 2, 1],
-  electronic: [5, 4, 3, 0, -1, 2, 3, 4, 5, 5, 4, 3, 1, 2, 4, 5]
+  bass: [7, 6, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  vocal: [-2, -1, 1, 4, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  electronic: [7, 6, 3, -1, -2, 2, 5, 6, 6, 5, 4, 2, 0, 1, 4, 5]
 };
 
 function initEqualizerChain() {
   if (!visualizer || !visualizer.audioContext || !visualizer.sourceNode) return;
   const ctx = visualizer.audioContext;
 
-  // Disconnect existing filters
   eqFilters.forEach(f => {
     try { f.disconnect(); } catch (e) {}
   });
   eqFilters = [];
 
-  // Generate frequency list for current bands count
-  const minF = 40;
+  const minF = 32;
   const maxF = 16000;
   const freqs = [];
   for (let i = 0; i < eqBandsCount; i++) {
-    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / (eqBandsCount - 1))));
+    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / Math.max(1, eqBandsCount - 1))));
   }
 
-  // Create BiquadFilters
+  // Ensure gains array matches bandsCount
+  while (eqState.gains.length < eqBandsCount) eqState.gains.push(0);
+  if (eqState.gains.length > eqBandsCount) eqState.gains = eqState.gains.slice(0, eqBandsCount);
+
   for (let i = 0; i < eqBandsCount; i++) {
     const filter = ctx.createBiquadFilter();
     filter.type = (i === 0) ? 'lowshelf' : (i === eqBandsCount - 1 ? 'highshelf' : 'peaking');
     filter.frequency.value = freqs[i];
-    filter.gain.value = 0;
-    filter.Q.value = 1.0;
+    filter.gain.value = eqState.enabled ? (eqState.gains[i] || 0) : 0;
+    filter.Q.value = 1.2;
     eqFilters.push(filter);
   }
 
-  // Re-link audio chain: sourceNode -> eqFilters -> analyser -> destination
   try {
     visualizer.sourceNode.disconnect();
   } catch (e) {}
@@ -2750,66 +3210,213 @@ function initEqualizerChain() {
   }
   prevNode.connect(visualizer.analyser);
 
-  renderEqSliders(freqs);
+  renderInteractiveEq();
 }
+window.initEqualizerChain = initEqualizerChain;
 
-function renderEqSliders(freqs) {
-  const container = document.getElementById('eq-sliders-container');
-  if (!container) return;
+function toggleEqPower() {
+  eqState.enabled = !eqState.enabled;
+  const btn = document.getElementById('btn-eq-power');
+  if (btn) {
+    btn.classList.toggle('active', eqState.enabled);
+    btn.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${eqState.enabled ? '#22c55e' : '#6b7280'};"></span><span>Эквалайзер ${eqState.enabled ? 'включен' : 'выключен'}</span>`;
+  }
+  applyAllEqGains();
+  saveEqState();
+  renderInteractiveEq();
+  showToast(eqState.enabled ? 'Эквалайзер включен' : 'Эквалайзер выключен (байпас)');
+}
+window.toggleEqPower = toggleEqPower;
 
-  container.innerHTML = eqFilters.map((filter, idx) => {
-    const fLabel = freqs[idx] >= 1000 ? `${(freqs[idx] / 1000).toFixed(1)}k` : `${freqs[idx]}`;
-    return `
-      <div style="display:flex; flex-direction:column; align-items:center; flex:1; height:100%;">
-        <span style="font-size:9px; color:var(--text-tertiary); margin-bottom:4px;">${fLabel}</span>
-        <input type="range" min="-12" max="12" step="0.5" value="${filter.gain.value}" 
-               orient="vertical" 
-               style="writing-mode:bt-lr; -webkit-appearance:slider-vertical; width:14px; flex:1; cursor:pointer;"
-               oninput="setEqFilterGain(${idx}, this.value)">
-        <span id="eq-gain-val-${idx}" style="font-size:8.5px; color:var(--text-secondary); margin-top:4px;">${Math.round(filter.gain.value)}dB</span>
-      </div>
-    `;
-  }).join('');
+function applyAllEqGains() {
+  eqFilters.forEach((filter, i) => {
+    const val = eqState.enabled ? (eqState.gains[i] || 0) : 0;
+    try {
+      filter.gain.setValueAtTime(val, (visualizer?.audioContext?.currentTime || 0));
+    } catch (e) {
+      filter.gain.value = val;
+    }
+  });
 }
 
 function setEqFilterGain(index, val) {
+  val = Math.max(-12, Math.min(12, Math.round(parseFloat(val) * 2) / 2));
+  eqState.gains[index] = val;
+  eqState.preset = 'custom';
+
   if (eqFilters[index]) {
-    eqFilters[index].gain.value = parseFloat(val);
-    const label = document.getElementById(`eq-gain-val-${index}`);
-    if (label) label.textContent = `${parseFloat(val) > 0 ? '+' : ''}${Math.round(val)}dB`;
+    const effectiveGain = eqState.enabled ? val : 0;
+    try {
+      eqFilters[index].gain.setValueAtTime(effectiveGain, (visualizer?.audioContext?.currentTime || 0));
+    } catch (e) {
+      eqFilters[index].gain.value = effectiveGain;
+    }
   }
+
+  updateEqPresetButtons();
+  saveEqState();
+  renderInteractiveEq();
 }
 window.setEqFilterGain = setEqFilterGain;
 
+function resetEqGains() {
+  eqState.gains = new Array(eqBandsCount).fill(0);
+  eqState.preset = 'flat';
+  applyAllEqGains();
+  saveEqState();
+  renderInteractiveEq();
+  updateEqPresetButtons();
+  showToast('Эквалайзер сброшен в 0 dB');
+}
+window.resetEqGains = resetEqGains;
+
+function applyEqPreset(presetName) {
+  const pValues = eqPresets[presetName];
+  if (!pValues) return;
+
+  eqState.preset = presetName;
+  for (let i = 0; i < eqBandsCount; i++) {
+    eqState.gains[i] = pValues[i % pValues.length] || 0;
+  }
+
+  applyAllEqGains();
+  saveEqState();
+  renderInteractiveEq();
+  updateEqPresetButtons();
+  showToast(`Пресет эквалайзера: ${presetName}`);
+}
+window.applyEqPreset = applyEqPreset;
+
+function updateEqPresetButtons() {
+  document.querySelectorAll('.eq-preset-btn').forEach(btn => {
+    if (btn.dataset.preset) {
+      btn.classList.toggle('active', btn.dataset.preset === eqState.preset);
+    }
+  });
+}
+
 function changeEqBandsCount(count) {
   eqBandsCount = parseInt(count, 10);
-  const label = document.getElementById('eq-bands-label');
+  eqState.bandsCount = eqBandsCount;
   const sliderVal = document.getElementById('eq-slider-val');
-  if (label) label.textContent = `${eqBandsCount} полос`;
   if (sliderVal) sliderVal.textContent = eqBandsCount;
   initEqualizerChain();
+  saveEqState();
 }
 window.changeEqBandsCount = changeEqBandsCount;
 
-function applyEqPreset(presetName) {
-  const gains = eqPresets[presetName];
-  if (!gains) return;
-  for (let i = 0; i < eqFilters.length; i++) {
-    const targetGain = gains[i % gains.length] || 0;
-    eqFilters[i].gain.value = targetGain;
-    const label = document.getElementById(`eq-gain-val-${i}`);
-    if (label) label.textContent = `${targetGain > 0 ? '+' : ''}${Math.round(targetGain)}dB`;
-  }
-  const minF = 40;
+function renderInteractiveEq() {
+  const container = document.getElementById('eq-sliders-container');
+  const curvePath = document.getElementById('eq-curve-path');
+  if (!container) return;
+
+  const minF = 32;
   const maxF = 16000;
   const freqs = [];
   for (let i = 0; i < eqBandsCount; i++) {
-    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / (eqBandsCount - 1))));
+    freqs.push(Math.round(minF * Math.pow(maxF / minF, i / Math.max(1, eqBandsCount - 1))));
   }
-  renderEqSliders(freqs);
-  showToast(`Эквалайзер: пресет «${presetName}»`);
+
+  // Generate Bezier curve points
+  // x: percentage across width, y: percentage from top (0dB is at 50%, +12dB at 8%, -12dB at 92%)
+  const points = [];
+  for (let i = 0; i < eqBandsCount; i++) {
+    const gain = eqState.enabled ? (eqState.gains[i] || 0) : 0;
+    const x = ((i + 0.5) / eqBandsCount) * 100;
+    const y = 50 - (gain / 12) * 42;
+    points.push({ x, y });
+  }
+
+  // Build smooth cubic Bezier curve through points
+  if (curvePath && points.length > 0) {
+    let d = `M 0 ${points[0].y} L ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i];
+      const p1 = points[i + 1];
+      const mx = (p0.x + p1.x) / 2;
+      d += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+    d += ` L 100 ${points[points.length - 1].y}`;
+    curvePath.setAttribute('d', d);
+  }
+
+  container.innerHTML = freqs.map((freq, idx) => {
+    const gain = eqState.gains[idx] || 0;
+    const fLabel = freq >= 1000 ? `${(freq / 1000).toFixed(1)}k` : `${freq}`;
+    const yPercent = 50 - (gain / 12) * 42; // 8% .. 92%
+
+    // Fill bar height & top
+    let fillTop, fillHeight;
+    if (gain >= 0) {
+      fillTop = yPercent;
+      fillHeight = 50 - yPercent;
+    } else {
+      fillTop = 50;
+      fillHeight = yPercent - 50;
+    }
+
+    const sign = gain > 0 ? '+' : '';
+    const gainLabel = `${sign}${gain.toFixed(gain % 1 !== 0 ? 1 : 0)}dB`;
+
+    return `
+      <div class="eq-band-column" data-band-idx="${idx}">
+        <span class="eq-freq-tag">${fLabel}</span>
+        <div class="eq-track-groove">
+          <div class="eq-fill-bar" style="top:${fillTop}%; height:${fillHeight}%;"></div>
+          <div class="eq-thumb-handle" style="top:${yPercent}%;"></div>
+        </div>
+        <span class="eq-gain-tag">${gainLabel}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Attach interactive drag, wheel, double-click to columns
+  container.querySelectorAll('.eq-band-column').forEach(col => {
+    const idx = parseInt(col.dataset.bandIdx, 10);
+    const groove = col.querySelector('.eq-track-groove');
+
+    // Dragging
+    const handleMove = (e) => {
+      const rect = groove.getBoundingClientRect();
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+      // ratio: 0 is top (+12dB), 1 is bottom (-12dB)
+      const rawGain = 12 - (ratio * 24);
+      setEqFilterGain(idx, rawGain);
+    };
+
+    col.addEventListener('mousedown', (e) => {
+      handleMove(e);
+      const onMouseMove = (moveEvt) => handleMove(moveEvt);
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Wheel adjustment
+    col.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const step = e.deltaY < 0 ? 0.5 : -0.5;
+      const current = eqState.gains[idx] || 0;
+      setEqFilterGain(idx, current + step);
+    }, { passive: false });
+
+    // Double-click to reset band to 0 dB
+    col.addEventListener('dblclick', () => {
+      setEqFilterGain(idx, 0);
+    });
+  });
+
+  updateEqPresetButtons();
 }
-window.applyEqPreset = applyEqPreset;
+window.renderInteractiveEq = renderInteractiveEq;
+window.changeEqBandsCount = changeEqBandsCount;
+window.toggleEqualizer = toggleEqPower;
+window.setEqBandGain = setEqFilterGain;
+window.resetEqualizer = resetEqGains;
 
 // Toggle Settings Modal
 function toggleSettingsModal(open) {
@@ -2824,6 +3431,8 @@ function toggleSettingsModal(open) {
   }
 }
 window.toggleSettingsModal = toggleSettingsModal;
+window.openSettingsModal = () => toggleSettingsModal(true);
+window.closeSettingsModal = () => toggleSettingsModal(false);
 
 // ─────────────────────────────────────────────────────────────
 // Windows Media Notification (SMTC UI) & Crossfade Engine
@@ -2874,3 +3483,81 @@ window.dismissOtaCard = dismissOtaCard;
 window.initOtaUpdater = initOtaUpdater;
 
 
+
+
+function switchSettingsTab(tabName) {
+  document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.settings-tab-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.id === `tab-panel-${tabName}`);
+  });
+  const titles = {
+    appearance: 'Внешний вид',
+    playback: 'Воспроизведение',
+    equalizer: 'Эквалайзер',
+    storage: 'Хранилище',
+    about: 'О приложении'
+  };
+  const titleEl = document.getElementById('settings-current-tab-title');
+  if (titleEl) titleEl.textContent = titles[tabName] || 'Настройки';
+
+  if (tabName === 'equalizer') {
+    if (!eqFilters.length) initEqualizerChain();
+    renderInteractiveEq();
+  }
+}
+window.switchSettingsTab = switchSettingsTab;
+
+function toggleWaveEconomyMode(checked) {
+  document.body.classList.toggle('wave-economy-mode', checked);
+  try {
+    localStorage.setItem('hurtmusic_wave_economy', checked ? '1' : '0');
+  } catch (e) {}
+  showToast(checked ? 'Экономный режим включен' : 'Экономный режим выключен');
+}
+window.toggleWaveEconomyMode = toggleWaveEconomyMode;
+
+// Init economy mode from storage
+try {
+  if (localStorage.getItem('hurtmusic_wave_economy') === '1') {
+    document.body.classList.add('wave-economy-mode');
+    const toggle = document.getElementById('wave-economy-toggle');
+    if (toggle) toggle.checked = true;
+  }
+} catch (e) {}
+
+
+function updateLivingWaveSphere() {
+  if (document.body.classList.contains('wave-economy-mode')) return;
+  const orb = document.getElementById('wave-sphere-orb');
+  const blob = document.getElementById('yandex-fluid-blob');
+  const aura = document.getElementById('yandex-wave-aura');
+  if (!orb || !blob) return;
+
+  if (state.isPlaying && state.isMyWaveActive && visualizer && typeof visualizer.getAudioMetrics === 'function') {
+    const metrics = visualizer.getAudioMetrics();
+    // Low frequencies drive size pulsation
+    const scale = 1.0 + metrics.bass * 0.22;
+    // Mid frequencies drive organic morphing of blob
+    const r1 = 44 + Math.round(metrics.mid * 18);
+    const r2 = 56 - Math.round(metrics.mid * 14);
+    const r3 = 52 + Math.round(metrics.bass * 16);
+    const r4 = 48 - Math.round(metrics.bass * 14);
+
+    blob.style.transform = `scale(${scale.toFixed(3)})`;
+    blob.style.borderRadius = `${r1}% ${r2}% ${r3}% ${r4}% / ${r4}% ${r3}% ${r2}% ${r1}%`;
+
+    if (aura) {
+      aura.style.transform = `scale(${(scale * 1.15).toFixed(3)})`;
+      aura.style.opacity = (0.7 + metrics.overall * 0.3).toFixed(2);
+    }
+  }
+}
+
+// Hook into animation frame loop for living wave
+setInterval(() => {
+  if (state.isMyWaveActive && state.isPlaying) {
+    updateLivingWaveSphere();
+  }
+}, 33);

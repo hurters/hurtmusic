@@ -35,6 +35,7 @@ const filesToCopy = [
   'discord-rpc-manager.js',
   'download-manager.js',
   'hls.min.js',
+  'icons.svg',
   'index.html',
   'lane-online-engine.js',
   'logo-cloud.png',

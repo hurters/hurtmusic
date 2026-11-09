@@ -72,6 +72,46 @@
       }
     }
 
+    /**
+     * Real-time audio frequency metrics for living canvas/WebGL animations
+     */
+    getAudioMetrics() {
+      if (!this.analyser || !this.dataArray) {
+        return { bass: 0, mid: 0, treble: 0, overall: 0 };
+      }
+      try {
+        this.analyser.getByteFrequencyData(this.dataArray);
+      } catch (e) {
+        return { bass: 0, mid: 0, treble: 0, overall: 0 };
+      }
+
+      const len = this.dataArray.length;
+      let bassSum = 0, bassCount = 0;
+      let midSum = 0, midCount = 0;
+      let trebleSum = 0, trebleCount = 0;
+
+      for (let i = 0; i < len; i++) {
+        const val = this.dataArray[i];
+        if (i < 8) {
+          bassSum += val;
+          bassCount++;
+        } else if (i < 28) {
+          midSum += val;
+          midCount++;
+        } else {
+          trebleSum += val;
+          trebleCount++;
+        }
+      }
+
+      return {
+        bass: (bassSum / (bassCount || 1)) / 255,
+        mid: (midSum / (midCount || 1)) / 255,
+        treble: (trebleSum / (trebleCount || 1)) / 255,
+        overall: ((bassSum + midSum + trebleSum) / (len || 1)) / 255
+      };
+    }
+
     attachCanvas(canvas) {
       this.canvas = canvas;
       if (canvas) {

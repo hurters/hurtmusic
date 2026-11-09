@@ -82,7 +82,8 @@ describe('Over-The-Air (OTA) Updater Tests', () => {
 
   it('считывает текущую версию приложения из package.json', () => {
     const updater = new OtaUpdater();
-    assert.strictEqual(updater.currentVersion, '1.0.0');
+    const pkgVersion = require('../package.json').version;
+    assert.strictEqual(updater.currentVersion, pkgVersion);
   });
 
   it('корректно определяет наличие ожидающего обновления', () => {

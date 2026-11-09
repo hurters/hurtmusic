@@ -10,6 +10,221 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Navigation: Моя волна -->
+  <symbol id="icon-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 12c1.5-3 3-4 4.5-4s3 8 4.5 8 3-8 4.5-8 3 8 4.5 8 2.5-2 4-4" />
+  </symbol>
+
+  <!-- Navigation: Поиск -->
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="7.5" />
+    <path d="m20.5 20.5-4.2-4.2" />
+  </symbol>
+
+  <!-- Navigation: Скачанные треки -->
+  <symbol id="icon-downloaded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </symbol>
+
+  <!-- Download icon (action) -->
+  <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 15v4a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 19v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </symbol>
+
+  <!-- Download Done / Success Checkmark -->
+  <symbol id="icon-download-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </symbol>
+
+  <!-- Navigation: Любимые треки (Контур) -->
+  <symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.5 12.572l-7.5 7.428l-7.5-7.428a5 5 0 1 1 7.5-6.566a5 5 0 1 1 7.5 6.572" />
+  </symbol>
+
+  <!-- Любимые треки (Залитое) -->
+  <symbol id="icon-heart-fill" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+  </symbol>
+
+  <!-- Добавить в медиатеку / Плюс (в той же системе, что и сердце) -->
+  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </symbol>
+
+  <!-- Navigation: Исполнители -->
+  <symbol id="icon-artist" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="7" r="4" />
+    <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+  </symbol>
+
+  <!-- Navigation: Альбомы -->
+  <symbol id="icon-album" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="3" />
+    <line x1="12" y1="3" x2="12" y2="6" />
+    <line x1="12" y1="18" x2="12" y2="21" />
+  </symbol>
+
+  <!-- Navigation: Настройки -->
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </symbol>
+
+  <!-- Player: Shuffle -->
+  <symbol id="icon-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="16 3 21 3 21 8" />
+    <line x1="4" y1="20" x2="21" y2="3" />
+    <polyline points="21 16 21 21 16 21" />
+    <line x1="15" y1="15" x2="21" y2="21" />
+    <line x1="4" y1="4" x2="9" y2="9" />
+  </symbol>
+
+  <!-- Player: Previous Track -->
+  <symbol id="icon-prev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="19 20 9 12 19 4 19 20" fill="currentColor" />
+    <line x1="5" y1="19" x2="5" y2="5" stroke-width="2.5" />
+  </symbol>
+
+  <!-- Player: Play (Solid) -->
+  <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="6 4 20 12 6 20 6 4" />
+  </symbol>
+
+  <!-- Player: Pause (Solid) -->
+  <symbol id="icon-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <rect x="6" y="4" width="4" height="16" rx="1.5" />
+    <rect x="14" y="4" width="4" height="16" rx="1.5" />
+  </symbol>
+
+  <!-- Player: Next Track -->
+  <symbol id="icon-next" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="5 4 15 12 5 20 5 4" fill="currentColor" />
+    <line x1="19" y1="5" x2="19" y2="19" stroke-width="2.5" />
+  </symbol>
+
+  <!-- Player: Repeat -->
+  <symbol id="icon-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="17 1 21 5 17 9" />
+    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+    <polyline points="7 23 3 19 7 15" />
+    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+  </symbol>
+
+  <!-- Player: Queue -->
+  <symbol id="icon-queue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5" />
+    <line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5" />
+    <line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5" />
+  </symbol>
+
+  <!-- Player: Lyrics -->
+  <symbol id="icon-lyrics" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    <line x1="7" y1="8" x2="17" y2="8" />
+    <line x1="7" y1="12" x2="13" y2="12" />
+  </symbol>
+
+  <!-- Player: Mini-Player (PiP) -->
+  <symbol id="icon-pip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <rect x="11" y="11" width="8" height="8" rx="1" fill="currentColor" fill-opacity="0.2" />
+  </symbol>
+
+  <!-- Player: Fullscreen -->
+  <symbol id="icon-fullscreen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="15 3 21 3 21 9" />
+    <polyline points="9 21 3 21 3 15" />
+    <polyline points="21 15 21 21 15 21" />
+    <polyline points="3 9 3 3 9 3" />
+  </symbol>
+
+  <!-- Player: Volume High -->
+  <symbol id="icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" fill-opacity="0.2" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </symbol>
+
+  <!-- Player: Volume Mute -->
+  <symbol id="icon-volume-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" fill-opacity="0.2" />
+    <line x1="23" y1="9" x2="17" y2="15" />
+    <line x1="17" y1="9" x2="23" y2="15" />
+  </symbol>
+
+  <!-- Window controls: Minimize -->
+  <symbol id="icon-minimize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </symbol>
+
+  <!-- Window controls: Maximize / Restore -->
+  <symbol id="icon-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+  </symbol>
+
+  <!-- Window controls: Close -->
+  <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </symbol>
+
+  <!-- Action: Back button -->
+  <symbol id="icon-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </symbol>
+
+  <!-- Equalizer Sliders -->
+  <symbol id="icon-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="21" x2="4" y2="14" />
+    <line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" />
+    <line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="1" y1="14" x2="7" y2="14" />
+    <line x1="9" y1="8" x2="15" y2="8" />
+    <line x1="17" y1="16" x2="23" y2="16" />
+  </symbol>
+
+  <!-- Folder / Storage -->
+  <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+  </symbol>
+
+  <!-- Info / About -->
+  <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2.5" />
+  </symbol>
+
+  <!-- Appearance / Palette -->
+  <symbol id="icon-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+  </symbol>
+
+  <!-- Refresh -->
+  <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </symbol>
+</svg>
   <div id="ambient-backdrop"></div>
 
   <!-- ── Titlebar ── -->
@@ -23,53 +238,35 @@
 
     <div class="window-controls no-drag">
       <button class="theme-toggle-pill" id="btn-top-ota" onclick="checkOtaUpdate(true)" title="Проверить обновления">
-        <svg id="ota-check-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
+        <svg class="nav-icon" width="13" height="13"><use href="#icon-refresh"/></svg>
         <span id="btn-check-ota-text">Обновление</span>
         <span id="ota-version-tag" style="opacity:0.7; font-size:10px;">v1.0.1</span>
       </button>
 
       <button class="win-btn" id="btn-open-settings" onclick="toggleSettingsModal(true)" title="Настройки" aria-label="Настройки">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
+        <svg class="nav-icon" width="14" height="14"><use href="#icon-settings"/></svg>
       </button>
 
       <button class="win-btn" id="btn-pip" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон (Ctrl+Shift+M)" aria-label="Мини-плеер">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="3" width="20" height="14" rx="2"></rect>
-          <rect x="11" y="8" width="9" height="7" rx="1.5" fill="currentColor"></rect>
-        </svg>
+        <svg class="nav-icon" width="13" height="13"><use href="#icon-pip"/></svg>
       </button>
 
       <button class="win-btn" id="btn-minimize" title="Свернуть" aria-label="Свернуть">
-        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+        <svg class="nav-icon" width="12" height="12"><use href="#icon-minimize"/></svg>
       </button>
 
       <button class="win-btn" id="btn-maximize" title="Развернуть" aria-label="Развернуть">
-        <svg id="icon-max" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
-          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-        </svg>
-        <svg id="icon-restore" style="display:none;" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
-          <rect x="5" y="8" width="11" height="11" rx="1.5"></rect>
-          <path d="M8 5h8a2 2 0 0 1 2 2v8"></path>
-        </svg>
+        <svg id="icon-max" class="nav-icon" width="12" height="12"><use href="#icon-maximize"/></svg>
+        <svg id="icon-restore" class="nav-icon" style="display:none;" width="12" height="12"><use href="#icon-maximize"/></svg>
       </button>
 
       <button class="win-btn close" id="btn-close" title="Закрыть" aria-label="Закрыть">
-        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+        <svg class="nav-icon" width="12" height="12"><use href="#icon-close"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- ── App ── -->
+  <!-- ── App Container ── -->
   <div id="app-container">
 
     <!-- Sidebar -->
@@ -78,16 +275,11 @@
         <div class="nav-group">
           <p class="nav-group-title">Музыка онлайн</p>
           <div class="nav-item" data-view="my-wave" onclick="switchView('my-wave')" title="Моя волна">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-wave"/></svg>
             <span class="nav-label">Моя волна</span>
           </div>
           <div class="nav-item active" data-view="online-search" onclick="switchView('online-search')" title="Поиск музыки">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-search"/></svg>
             <span class="nav-label">Поиск музыки</span>
           </div>
         </div>
@@ -95,33 +287,19 @@
         <div class="nav-group">
           <p class="nav-group-title">Медиатека</p>
           <div class="nav-item" data-view="downloaded" onclick="switchView('downloaded')" title="Скачанные треки">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-downloaded"/></svg>
             <span class="nav-label">Скачанные треки</span>
           </div>
           <div class="nav-item" data-view="favorites" onclick="switchView('favorites')" title="Любимые треки">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-heart"/></svg>
             <span class="nav-label">Любимые треки</span>
           </div>
           <div class="nav-item" data-view="artists" onclick="switchView('artists')" title="Исполнители">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-artist"/></svg>
             <span class="nav-label">Исполнители</span>
           </div>
           <div class="nav-item" data-view="albums" onclick="switchView('albums')" title="Альбомы">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+            <svg class="nav-icon" width="16" height="16"><use href="#icon-album"/></svg>
             <span class="nav-label">Альбомы</span>
           </div>
         </div>
@@ -129,32 +307,23 @@
 
       <div class="sidebar-footer">
         <div class="nav-item" onclick="toggleSettingsModal(true)" title="Настройки">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
+          <svg class="nav-icon" width="16" height="16"><use href="#icon-settings"/></svg>
           <span class="nav-label">Настройки</span>
         </div>
       </div>
     </aside>
 
-    <!-- Main -->
+    <!-- Main Viewport -->
     <main id="main-viewport">
 
-      <!-- Library / search view -->
+      <!-- Library / Standard View -->
       <div id="standard-library-view">
         <div class="top-search-bar">
           <div class="search-input-wrapper">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="library-search" class="search-input" placeholder="Поиск по библиотеке и SoundCloud" oninput="handleSearch(this.value)" autocomplete="off">
+            <svg class="nav-icon" width="16" height="16" style="color:var(--text-tertiary);"><use href="#icon-search"/></svg>
+            <input type="text" id="library-search" class="search-input" placeholder="Поиск на SoundCloud и в библиотеке" oninput="handleSearch(this.value)" autocomplete="off">
             <button id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" title="Очистить поиск" aria-label="Очистить поиск">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <svg width="12" height="12"><use href="#icon-close"/></svg>
             </button>
             <kbd class="search-kbd">Ctrl K</kbd>
           </div>
@@ -179,7 +348,29 @@
           </button>
         </div>
 
-        <!-- Hero -->
+        <!-- Detail Header (For Artist or Album Page) -->
+        <div id="collection-detail-header" class="collection-detail-header" style="display:none;">
+          <button class="detail-back-btn" id="detail-back-btn" onclick="navigateBackFromDetail()">
+            <svg width="14" height="14"><use href="#icon-back"/></svg>
+            <span id="detail-back-text">Назад</span>
+          </button>
+          <div id="detail-art-container"></div>
+          <div class="detail-info">
+            <h1 class="detail-title" id="detail-title">Исполнитель</h1>
+            <p class="detail-subtitle" id="detail-subtitle">0 треков</p>
+          </div>
+          <div class="detail-actions">
+            <button class="btn" id="detail-play-btn" onclick="playCurrentDetailCollection(false)">
+              <svg width="14" height="14" style="margin-right:6px;"><use href="#icon-play"/></svg>
+              <span>Играть</span>
+            </button>
+            <button class="btn" id="detail-shuffle-btn" onclick="playCurrentDetailCollection(true)" title="Перемешать">
+              <svg width="14" height="14"><use href="#icon-shuffle"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Hero Card -->
         <section class="hero-card" id="main-hero-card">
           <div class="hero-main">
             <div class="vinyl-stage" id="hero-vinyl-stage">
@@ -187,11 +378,7 @@
               <div class="album-jacket" id="hero-album-jacket">
                 <img id="hero-cover-img" src="" alt="" style="display:none;" />
                 <div id="hero-cover-placeholder">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M9 18V5l12-2v13"></path>
-                    <circle cx="6" cy="18" r="3"></circle>
-                    <circle cx="18" cy="16" r="3"></circle>
-                  </svg>
+                  <svg width="40" height="40" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
                 </div>
               </div>
             </div>
@@ -200,377 +387,478 @@
               <span class="hero-badge" id="hero-badge">SoundCloud Charts</span>
               <h1 id="hero-title">Поиск музыки</h1>
               <p id="hero-subtitle">Стриминг треков и воспроизведение локальной медиатеки</p>
-              <div id="hero-artist-badge"><span id="hero-artist-name">By hurtmusic</span></div>
+              <div id="hero-artist-badge"><span id="hero-artist-name">Каталог треков</span></div>
             </div>
           </div>
 
           <div class="hero-actions">
             <button id="hero-fav-btn" onclick="toggleCurrentTrackFavorite()" class="hero-icon-btn" title="В любимые">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-              <span id="hero-fav-count">7422</span>
+              <svg width="16" height="16"><use href="#icon-heart"/></svg>
+              <span id="hero-fav-count" style="display:none;">0</span>
             </button>
             <button id="hero-shuffle-btn" onclick="toggleShuffle()" class="hero-icon-btn" title="Перемешать" aria-label="Перемешать">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 3 21 3 21 8"></polyline>
-                <line x1="4" y1="20" x2="21" y2="3"></line>
-                <polyline points="21 16 21 21 16 21"></polyline>
-                <line x1="4" y1="4" x2="9" y2="9"></line>
-              </svg>
+              <svg width="16" height="16"><use href="#icon-shuffle"/></svg>
             </button>
             <button id="hero-action-btn" onclick="switchView('downloaded')" class="hero-icon-btn" title="Скачанные треки">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
+              <svg width="15" height="15"><use href="#icon-downloaded"/></svg>
               <span>Скачанные</span>
             </button>
             <button id="hero-main-play" class="hero-big-white-play" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
-              <svg id="hero-icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-              <svg id="hero-icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              <svg id="hero-icon-play" width="22" height="22"><use href="#icon-play"/></svg>
+              <svg id="hero-icon-pause" style="display:none;" width="22" height="22"><use href="#icon-pause"/></svg>
             </button>
           </div>
         </section>
 
-        <!-- Tracks -->
-        <div class="tracks-container">
+        <!-- Tracks Container (Lists) -->
+        <div class="tracks-container" id="tracks-container-view">
           <div class="list-header">
-            <h2 id="view-heading">Скачанные треки</h2>
+            <h2 id="view-heading">Треки</h2>
             <span id="track-stats-label">0 треков</span>
           </div>
 
           <div id="track-list"></div>
 
-          <div id="empty-state">
+          <div id="empty-state" style="display:none;">
             <div class="empty-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18V5l12-2v13"></path>
-                <circle cx="6" cy="18" r="3"></circle>
-                <circle cx="18" cy="16" r="3"></circle>
-              </svg>
+              <svg width="32" height="32" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
             </div>
-            <h3>Локальные треки не найдены</h3>
-            <p>Скачивайте треки из онлайн-поиска или укажите папку с музыкой на компьютере.</p>
-            <button class="import-lane-btn" onclick="triggerLaneFolderImport()">Выбрать папку с музыкой</button>
+            <p class="empty-title" id="empty-state-title">В этом разделе пока нет треков</p>
+            <p class="empty-desc" id="empty-state-desc">Используйте поиск музыки или скачивайте любимые треки для прослушивания офлайн.</p>
           </div>
         </div>
+
+        <!-- Artists Grid Container -->
+        <div id="artists-grid-view" style="display:none;">
+          <div class="list-header" style="margin: 0 var(--gutter) 16px;">
+            <h2>Исполнители</h2>
+            <span id="artists-stats-label">0 исполнителей</span>
+          </div>
+          <div class="artists-grid" id="artists-grid"></div>
+          <div id="artists-empty-state" style="display:none; text-align:center; padding: 48px var(--gutter);">
+            <div class="empty-icon">
+              <svg width="36" height="36" style="color:var(--text-tertiary);"><use href="#icon-artist"/></svg>
+            </div>
+            <p class="empty-title">Исполнители не найдены</p>
+            <p class="empty-desc">Сохраняйте или скачивайте треки, чтобы сформировать каталог артистов.</p>
+          </div>
+        </div>
+
+        <!-- Albums Grid Container -->
+        <div id="albums-grid-view" style="display:none;">
+          <div class="list-header" style="margin: 0 var(--gutter) 16px;">
+            <h2>Альбомы</h2>
+            <span id="albums-stats-label">0 альбомов</span>
+          </div>
+          <div class="albums-grid" id="albums-grid"></div>
+          <div id="albums-empty-state" style="display:none; text-align:center; padding: 48px var(--gutter);">
+            <div class="empty-icon">
+              <svg width="36" height="36" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
+            </div>
+            <p class="empty-title">Альбомы пока не добавлены</p>
+            <p class="empty-desc">В вашей медиатеке пока нет альбомов. Добавьте локальные треки с тегом альбома или плейлисты.</p>
+          </div>
+        </div>
+
       </div>
 
-      <!-- My Wave view -->
+      <!-- My Wave (Моя волна) View -->
       <div id="my-wave-view" style="display:none;">
         <div class="wave-stage">
-          <div class="wave-mode-chips">
-            <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"></path></svg>
-              По треку
-            </button>
-            <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-              Мои любимые
-            </button>
-            <button class="wave-chip" id="chip-mode-energetic" onclick="setWaveMood('energetic')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-              Бодрое
-            </button>
-            <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-              Спокойное
-            </button>
-            <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              Новинки
-            </button>
+          <div class="wave-chips-bar" id="wave-mood-chips">
+            <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">По треку</button>
+            <button class="wave-chip" id="chip-mode-favorites" onclick="setWaveMood('favorites')">Мои любимые</button>
+            <button class="wave-chip" id="chip-mode-energetic" onclick="setWaveMood('energetic')">Бодрое</button>
+            <button class="wave-chip" id="chip-mode-chill" onclick="setWaveMood('chill')">Спокойное</button>
+            <button class="wave-chip" id="chip-mode-fresh" onclick="setWaveMood('fresh')">Новинки</button>
           </div>
 
-          <div class="yandex-fluid-container" id="wave-sphere-orb" onclick="toggleMyWavePlayback()">
-            <div class="yandex-fluid-aura" id="yandex-wave-aura"></div>
-            <div class="yandex-fluid-blob" id="yandex-fluid-blob"></div>
-            <div class="yandex-fluid-content">
-              <div class="yandex-fluid-title">
-                <span id="wave-orb-status-icon">
-                  <svg id="wave-orb-icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  <svg id="wave-orb-icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                </span>
-                <span>Моя волна</span>
+          <div class="wave-center-zone">
+            <div class="yandex-fluid-container" id="wave-sphere-orb" onclick="toggleMyWavePlayback()">
+              <div class="yandex-ambient-aura" id="yandex-wave-aura"></div>
+              <div class="yandex-fluid-sphere" id="yandex-fluid-blob">
+                <canvas id="wave-orb-canvas" class="wave-canvas-overlay" width="300" height="300"></canvas>
+                <div class="wave-orb-center-play">
+                  <svg id="wave-orb-icon-play" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  <svg id="wave-orb-icon-pause" style="display:none;" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </div>
               </div>
-              <button class="yandex-fluid-tune-btn" onclick="event.stopPropagation(); document.querySelector('.wave-mode-chips').scrollIntoView({behavior:'smooth'});">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
-                  <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
-                  <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
-                </svg>
-                <span>Настроить</span>
+            </div>
+
+            <div class="wave-current-track-info">
+              <h2 id="wave-now-title">Моя волна</h2>
+              <p id="wave-now-artist">Нажмите на сферу, чтобы запустить бесконечный поток музыки</p>
+              <div id="wave-current-source-desc">Персональная рекомендательная волна</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wave-bottom-sheet">
+          <div class="wave-sheet-header">
+            <div>
+              <h3>Далее в волне</h3>
+              <p id="wave-status-text">Готова к запуску · Нажмите на сферу</p>
+            </div>
+            <div class="wave-sheet-actions">
+              <button class="btn" id="btn-refresh-wave" onclick="refreshWaveStream()">
+                <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-refresh"/></svg>
+                <span>Обновить поток</span>
+              </button>
+              <button class="btn" id="btn-download-wave" onclick="downloadAllWaveTracks()">
+                <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-download"/></svg>
+                <span>Скачать поток</span>
               </button>
             </div>
           </div>
-
-          <div class="wave-now">
-            <h2 id="wave-now-title">Моя волна</h2>
-            <p id="wave-now-artist">Нажмите на сферу, чтобы запустить бесконечный поток музыки</p>
-          </div>
-
-          <div class="spectral-canvas-wrapper">
-            <canvas id="spectral-wave-canvas"></canvas>
-          </div>
+          <div id="wave-track-list" class="wave-track-list"></div>
         </div>
-
-        <div class="wave-queue-header">
-          <div>
-            <h2>Далее в вашей волне</h2>
-            <p id="wave-queue-sublabel">Похожие треки подбираются автоматически</p>
-          </div>
-          <div class="wave-queue-actions">
-            <button class="btn btn-small" onclick="downloadWaveQueueBatch()" title="Сохранить всю очередь волны на диск">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Скачать поток
-            </button>
-            <button class="btn btn-small" onclick="refreshWaveQueue()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-              Обновить поток
-            </button>
-          </div>
-        </div>
-
-        <div id="wave-track-list"></div>
       </div>
+
     </main>
   </div>
 
-  <!-- ── Player bar ── -->
+  <!-- ── Bottom Player Bar (Spotify Style) ── -->
   <footer id="player-bar">
-    <div id="bar-left" onclick="openFullscreenModal()">
-      <div id="bar-cover-art" class="track-cover-art">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>
+    <div id="bar-left">
+      <div class="bar-cover-art" id="bar-cover-art" onclick="toggleFullscreenPlayer()">
+        <img id="bar-cover-img" src="" alt="" style="display:none;" />
+        <svg id="bar-cover-placeholder" width="20" height="20" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
       </div>
       <div class="bar-meta">
-        <p id="bar-title">Ничего не играет</p>
+        <div class="bar-title-wrap">
+          <p id="bar-title">Не воспроизводится</p>
+        </div>
         <p id="bar-artist">Выберите трек</p>
       </div>
-      <button class="icon-btn" id="bar-heart-btn" onclick="event.stopPropagation(); toggleCurrentTrackFavorite()" title="Сохранить в любимые" aria-label="Сохранить в любимые">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
+      <button class="icon-btn" id="bar-add-lib-btn" onclick="toggleCurrentTrackFavorite()" title="В медиатеку / избранное" aria-label="В медиатеку">
+        <svg id="bar-plus-icon" width="16" height="16"><use href="#icon-plus"/></svg>
+      </button>
+      <button class="icon-btn" id="bar-heart-btn" onclick="toggleCurrentTrackFavorite()" title="В любимые" aria-label="В любимые">
+        <svg id="bar-heart-icon" width="16" height="16"><use href="#icon-heart"/></svg>
       </button>
     </div>
 
     <div id="bar-center">
-      <div id="player-buttons-row">
-        <button class="icon-btn" id="btn-shuffle" onclick="toggleShuffle()" title="В случайном порядке" aria-label="В случайном порядке">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
-            <polyline points="21 16 21 21 16 21"></polyline><line x1="4" y1="4" x2="9" y2="9"></line>
-          </svg>
+      <div class="player-controls">
+        <button class="icon-btn" id="btn-shuffle" onclick="toggleShuffle()" title="Случайный порядок" aria-label="Случайный порядок">
+          <svg width="16" height="16"><use href="#icon-shuffle"/></svg>
         </button>
-        <button class="icon-btn" onclick="playPrevious()" title="Предыдущий" aria-label="Предыдущий">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        <button class="icon-btn" id="btn-prev" onclick="playPrevious()" title="Предыдущий трек" aria-label="Предыдущий трек">
+          <svg width="16" height="16"><use href="#icon-prev"/></svg>
         </button>
         <button class="play-toggle-btn" id="btn-play-pause" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
-          <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="icon-pause" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          <svg id="icon-play" width="16" height="16"><use href="#icon-play"/></svg>
+          <svg id="icon-pause" style="display:none;" width="16" height="16"><use href="#icon-pause"/></svg>
         </button>
-        <button class="icon-btn" onclick="playNext()" title="Следующий" aria-label="Следующий">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/></svg>
+        <button class="icon-btn" id="btn-next" onclick="playNext()" title="Следующий трек" aria-label="Следующий трек">
+          <svg width="16" height="16"><use href="#icon-next"/></svg>
         </button>
-        <button class="icon-btn" id="btn-repeat" onclick="toggleRepeat()" title="Повтор" aria-label="Повтор">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-            <polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-          </svg>
+        <button class="icon-btn" id="btn-repeat" onclick="toggleRepeat()" title="Повтор трека" aria-label="Повтор трека">
+          <svg width="16" height="16"><use href="#icon-repeat"/></svg>
         </button>
       </div>
 
       <div class="slider-wrapper">
         <span class="time-label" id="current-time-label">0:00</span>
-        <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1" aria-label="Перемотка"
-               oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)">
+        <div class="scrubber-bar" id="scrubber-bar">
+          <div class="scrubber-buffered" id="scrubber-buffered"></div>
+          <div class="scrubber-progress" id="scrubber-progress"></div>
+          <div class="scrubber-thumb" id="scrubber-thumb"></div>
+        </div>
         <span class="time-label" id="duration-label">-0:00</span>
       </div>
     </div>
 
     <div id="bar-right">
-      <button class="icon-btn" id="btn-lyrics-toggle" onclick="toggleLyricsModal()" title="Текст песни" aria-label="Текст песни">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          <line x1="8" y1="9" x2="16" y2="9"></line><line x1="8" y1="13" x2="13" y2="13"></line>
-        </svg>
+      <button class="icon-btn" id="btn-lyrics-bar" onclick="toggleLyricsDrawer()" title="Текст песни (Слова)" aria-label="Текст песни">
+        <svg width="16" height="16"><use href="#icon-lyrics"/></svg>
       </button>
-      <button class="icon-btn" id="btn-queue-toggle" onclick="switchView('my-wave')" title="Очередь" aria-label="Очередь">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line>
-          <line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>
-        </svg>
+      <button class="icon-btn" id="btn-pip-bar" onclick="toggleMiniPlayerMode()" title="Мини-плеер поверх всех окон" aria-label="Мини-плеер">
+        <svg width="16" height="16"><use href="#icon-pip"/></svg>
       </button>
-      <button class="icon-btn" id="btn-pip-bar" onclick="toggleMiniPlayerMode()" title="Мини-плеер (Ctrl+Shift+M)" aria-label="Мини-плеер">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-          <rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor"></rect>
-        </svg>
-      </button>
-      <button class="icon-btn" id="btn-mute" onclick="toggleMute()" title="Звук" aria-label="Выключить звук">
-        <svg id="icon-vol-high" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-        </svg>
-        <svg id="icon-vol-mute" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>
-        </svg>
+      <button class="icon-btn" id="btn-queue-bar" onclick="switchView('my-wave')" title="Очередь волны" aria-label="Очередь">
+        <svg width="16" height="16"><use href="#icon-queue"/></svg>
       </button>
       <div class="volume-wrap">
-        <input type="range" id="volume-slider" min="0" max="1" value="0.8" step="0.01" aria-label="Громкость" oninput="setVolume(this.value)">
+        <button class="icon-btn" id="btn-mute" onclick="toggleMute()" title="Звук" aria-label="Звук">
+          <svg id="vol-icon-high" width="16" height="16"><use href="#icon-volume"/></svg>
+          <svg id="vol-icon-mute" style="display:none;" width="16" height="16"><use href="#icon-volume-mute"/></svg>
+        </button>
+        <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.8" aria-label="Громкость">
       </div>
-      <button class="icon-btn" id="btn-fs" onclick="openFullscreenModal()" title="Полноэкранный плеер" aria-label="Полноэкранный плеер">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline>
-          <line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
-        </svg>
+      <button class="icon-btn" id="btn-fullscreen-bar" onclick="toggleFullscreenPlayer()" title="Полноэкранный плеер" aria-label="Полноэкранный плеер">
+        <svg width="16" height="16"><use href="#icon-fullscreen"/></svg>
       </button>
     </div>
   </footer>
 
-  <!-- ── Fullscreen player ── -->
+  <!-- ── Fullscreen Player Overlay ── -->
   <div id="fs-overlay">
-    <button class="icon-btn fs-close" onclick="closeFullscreenModal()" aria-label="Закрыть">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+    <button class="fs-close-btn" onclick="toggleFullscreenPlayer(false)" aria-label="Закрыть полноэкранный плеер">
+      <svg width="18" height="18"><use href="#icon-close"/></svg>
     </button>
-
-    <div class="vinyl-stage-fs" id="fs-vinyl-stage">
-      <div class="vinyl-disc-fs" id="fs-vinyl-disc"></div>
-      <div class="album-jacket-fs" id="fs-jacket">
-        <img id="fs-cover-img" src="" alt="" style="display:none;" />
-        <div id="fs-placeholder-icon">
-          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 18V5l12-2v13"></path>
-            <circle cx="6" cy="18" r="3"></circle>
-            <circle cx="18" cy="16" r="3"></circle>
-          </svg>
-        </div>
+    <div class="fs-art">
+      <img id="fs-cover-img" src="" alt="" style="display:none;" />
+      <div id="fs-cover-placeholder">
+        <svg width="72" height="72" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
       </div>
     </div>
-
-    <div class="fs-info">
-      <h2 id="fs-title">Ничего не играет</h2>
+    <div class="fs-meta">
+      <h1 id="fs-title">Не воспроизводится</h1>
       <p id="fs-artist">Выберите трек</p>
     </div>
-
-    <div class="slider-wrapper fs-scrubber">
-      <span class="time-label" id="fs-cur-time">0:00</span>
-      <input type="range" id="fs-progress" min="0" max="100" value="0" step="0.1" aria-label="Перемотка"
-             oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)">
-      <span class="time-label" id="fs-dur-time">-0:00</span>
-    </div>
-
     <div class="fs-controls">
-      <button class="icon-btn" onclick="playPrevious()" aria-label="Предыдущий">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      <div class="fs-slider-wrap">
+        <span class="time-label" id="fs-curr-time">0:00</span>
+        <div class="scrubber-bar" id="fs-scrubber-bar">
+          <div class="scrubber-progress" id="fs-scrubber-progress"></div>
+        </div>
+        <span class="time-label" id="fs-dur-time">-0:00</span>
+      </div>
+      <div class="fs-btns">
+        <button class="icon-btn" onclick="playPrevious()" aria-label="Предыдущий">
+          <svg width="24" height="24"><use href="#icon-prev"/></svg>
+        </button>
+        <button class="play-toggle-btn" onclick="togglePlayPause()" aria-label="Играть / Пауза">
+          <svg id="fs-icon-play" width="24" height="24"><use href="#icon-play"/></svg>
+          <svg id="fs-icon-pause" style="display:none;" width="24" height="24"><use href="#icon-pause"/></svg>
+        </button>
+        <button class="icon-btn" onclick="playNext()" aria-label="Следующий">
+          <svg width="24" height="24"><use href="#icon-next"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Mini-Player HUD ── -->
+  <div id="mini-player-hud" style="display:none;">
+    <div class="hud-content">
+      <div class="hud-cover">
+        <img id="hud-cover-img" src="" alt="" style="display:none;" />
+        <div id="hud-cover-placeholder">
+          <svg width="18" height="18" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
+        </div>
+      </div>
+      <div class="hud-meta">
+        <p id="hud-title">hurtmusic</p>
+        <p id="hud-artist">Мини-плеер</p>
+      </div>
+      <button id="hud-fav-btn" class="wave-action-btn hud-no-drag" onclick="toggleCurrentTrackFavorite()" title="В любимые">
+        <svg id="hud-heart-icon" width="13" height="13"><use href="#icon-heart"/></svg>
       </button>
-      <button class="play-toggle-btn" onclick="togglePlayPause()" aria-label="Играть / Пауза">
-        <svg id="fs-icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <svg id="fs-icon-pause" style="display:none;" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      <button class="wave-action-btn hud-no-drag" onclick="playPrevious()" title="Назад" aria-label="Назад">
+        <svg width="13" height="13"><use href="#icon-prev"/></svg>
       </button>
-      <button class="icon-btn" onclick="playNext()" aria-label="Следующий">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/></svg>
+      <button id="hud-play-btn" class="play-toggle-btn hud-no-drag" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
+        <svg id="hud-icon-play" width="13" height="13"><use href="#icon-play"/></svg>
+        <svg id="hud-icon-pause" style="display:none;" width="13" height="13"><use href="#icon-pause"/></svg>
+      </button>
+      <button class="wave-action-btn hud-no-drag" onclick="playNext()" title="Вперёд" aria-label="Вперёд">
+        <svg width="13" height="13"><use href="#icon-next"/></svg>
+      </button>
+      <button class="wave-action-btn hud-no-drag" onclick="toggleMiniPlayerMode(false)" title="Развернуть" aria-label="Развернуть">
+        <svg width="13" height="13"><use href="#icon-maximize"/></svg>
       </button>
     </div>
   </div>
 
-  <!-- ── Mini-player HUD ── -->
-  <div id="mini-player-hud">
-    <div class="hud-cover">
-      <div id="hud-cover-wrap" class="vinyl-stage" style="--hero-jacket-size:48px;">
-        <div id="hud-vinyl-disc" class="vinyl-disc-slip"></div>
-        <div class="album-jacket" style="border-radius:6px;">
-          <img id="hud-cover-img" src="" alt="" style="display:none;" />
-          <div id="hud-cover-placeholder">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18V5l12-2v13"></path>
-              <circle cx="6" cy="18" r="3"></circle>
-              <circle cx="18" cy="16" r="3"></circle>
-            </svg>
+  <!-- ── Lyrics Slide-over Drawer ── -->
+  <div id="lyrics-drawer-overlay">
+    <div class="lyrics-panel">
+      <div class="lyrics-head">
+        <div>
+          <h2>Слова трека</h2>
+          <p id="lyrics-track-artist">Синхронизированный текст LRCLIB</p>
+        </div>
+        <button class="icon-btn" onclick="toggleLyricsDrawer(false)" aria-label="Закрыть текст">
+          <svg width="18" height="18"><use href="#icon-close"/></svg>
+        </button>
+      </div>
+      <div id="lyrics-container">
+        <p class="lyrics-line" style="color:var(--text-tertiary); text-align:center; padding: 40px 0;">Загрузка текста песни...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Two-Pane Settings Modal ── -->
+  <div id="settings-modal-overlay">
+    <div class="settings-dialog">
+      <!-- Left Category Sidebar -->
+      <div class="settings-sidebar">
+        <span class="settings-sidebar-title">Настройки</span>
+        <button class="settings-tab-btn active" data-tab="appearance" onclick="switchSettingsTab('appearance')">
+          <svg width="15" height="15"><use href="#icon-palette"/></svg>
+          <span>Внешний вид</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="playback" onclick="switchSettingsTab('playback')">
+          <svg width="15" height="15"><use href="#icon-play"/></svg>
+          <span>Воспроизведение</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="equalizer" onclick="switchSettingsTab('equalizer')">
+          <svg width="15" height="15"><use href="#icon-sliders"/></svg>
+          <span>Эквалайзер</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="storage" onclick="switchSettingsTab('storage')">
+          <svg width="15" height="15"><use href="#icon-folder"/></svg>
+          <span>Хранилище</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="about" onclick="switchSettingsTab('about')">
+          <svg width="15" height="15"><use href="#icon-info"/></svg>
+          <span>О приложении</span>
+        </button>
+      </div>
+
+      <!-- Right Content Area -->
+      <div class="settings-content-wrapper">
+        <div class="settings-content-header">
+          <h2 id="settings-current-tab-title">Внешний вид</h2>
+          <button class="icon-btn" onclick="toggleSettingsModal(false)" aria-label="Закрыть настройки">
+            <svg width="16" height="16"><use href="#icon-close"/></svg>
+          </button>
+        </div>
+
+        <!-- 1. Внешний вид -->
+        <div class="settings-tab-panel active" id="tab-panel-appearance">
+          <div class="setting-card">
+            <div class="setting-title" style="margin-bottom:10px;">Тема оформления</div>
+            <div class="setting-split">
+              <button class="theme-option" id="btn-theme-dark" onclick="setTheme('dark')">Hurt Dark</button>
+              <button class="theme-option" id="btn-theme-light" onclick="setTheme('vinyl')">Винил</button>
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-row">
+              <div class="setting-title">Разрешение экрана</div>
+              <span class="setting-value" id="res-badge">Авто</span>
+            </div>
+            <select id="res-select" onchange="changeResolutionPreset(this.value)">
+              <option value="auto" selected>Автоопределение</option>
+              <option value="1440x1080">1440 × 1080 (4:3)</option>
+              <option value="1920x1080">1920 × 1080 (16:9)</option>
+              <option value="1280x720">1280 × 720 (16:9)</option>
+              <option value="1024x768">1024 × 768 (4:3)</option>
+            </select>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-row">
+              <div>
+                <div class="setting-title">Экономный режим «Моей волны»</div>
+                <div class="setting-hint" style="margin-bottom:0;">Отключает тяжёлые blur-эффекты и разгружает видеокарту на слабых ПК.</div>
+              </div>
+              <input type="checkbox" id="wave-economy-toggle" onchange="toggleWaveEconomyMode(this.checked)" style="width:18px; height:18px; cursor:pointer;">
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="hud-meta">
-      <p id="hud-title">Ничего не играет</p>
-      <p id="hud-artist">hurtmusic</p>
-    </div>
+        <!-- 2. Воспроизведение -->
+        <div class="settings-tab-panel" id="tab-panel-playback">
+          <div class="setting-card">
+            <div class="setting-row">
+              <div class="setting-title">Плавный переход между треками (Crossfade)</div>
+              <span class="setting-value" id="crossfade-val-label">0 сек (выкл.)</span>
+            </div>
+            <p class="setting-hint">Треки перетекают друг в друга без тишины в конце.</p>
+            <input type="range" id="crossfade-slider" min="0" max="8" value="0" step="1" aria-label="Кроссфейд" oninput="changeCrossfade(this.value)">
+          </div>
 
-    <div class="hud-controls hud-no-drag">
-      <button class="wave-action-btn" onclick="toggleCurrentTrackFavorite()" title="В любимые" aria-label="В любимые">
-        <svg id="hud-icon-heart" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-      </button>
-      <button class="wave-action-btn" onclick="playPrevious()" title="Назад" aria-label="Назад">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-      </button>
-      <button id="hud-play-btn" class="play-toggle-btn" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
-        <svg id="hud-icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <svg id="hud-icon-pause" style="display:none;" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-      </button>
-      <button class="wave-action-btn" onclick="playNext()" title="Вперёд" aria-label="Вперёд">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.64L8 18.14V9.86zM16 6h2v12h-2z"/></svg>
-      </button>
-      <button class="wave-action-btn" style="color:var(--accent);" onclick="toggleMiniPlayerMode()" title="Развернуть" aria-label="Развернуть">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- ── OTA update card ── -->
-  <div id="ota-modal-card">
-    <div class="ota-head">
-      <div>
-        <div class="ota-title">
-          <span>Обновление HurtMusic</span>
-          <span id="ota-card-version-badge">v1.0.1</span>
+          <div class="setting-card">
+            <div class="setting-row">
+              <div>
+                <div class="setting-title">Нормализация громкости</div>
+                <div class="setting-hint" style="margin-bottom:0;">Выравнивает громкость онлайн-треков SoundCloud до комфортного уровня.</div>
+              </div>
+              <input type="checkbox" id="loudness-norm-toggle" checked style="width:18px; height:18px; cursor:pointer;">
+            </div>
+          </div>
         </div>
-        <div id="ota-card-subtitle">Доступен новый пакет приложения</div>
+
+        <!-- 3. Эквалайзер -->
+        <div class="settings-tab-panel" id="tab-panel-equalizer">
+          <div class="eq-widget">
+            <div class="eq-top-bar">
+              <button class="eq-toggle-btn active" id="btn-eq-power" onclick="toggleEqPower()">
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e;"></span>
+                <span>Эквалайзер включен</span>
+              </button>
+
+              <div class="eq-presets-row">
+                <button class="eq-preset-btn active" data-preset="flat" onclick="applyEqPreset('flat')">Flat</button>
+                <button class="eq-preset-btn" data-preset="bass" onclick="applyEqPreset('bass')">Bass Boost</button>
+                <button class="eq-preset-btn" data-preset="vocal" onclick="applyEqPreset('vocal')">Vocal</button>
+                <button class="eq-preset-btn" data-preset="electronic" onclick="applyEqPreset('electronic')">Club/Phonk</button>
+                <button class="eq-preset-btn" onclick="resetEqGains()" title="Сбросить все полосы в 0 dB">Сбросить</button>
+              </div>
+            </div>
+
+            <div class="eq-visual-area" id="eq-visual-area">
+              <div class="eq-grid-lines">
+                <div class="eq-grid-line" style="top: 8%;"></div>
+                <div class="eq-grid-line" style="top: 29%;"></div>
+                <div class="eq-grid-line zero" style="top: 50%;"></div>
+                <div class="eq-grid-line" style="top: 71%;"></div>
+                <div class="eq-grid-line" style="top: 92%;"></div>
+              </div>
+
+              <svg class="eq-curve-svg" id="eq-curve-svg" preserveAspectRatio="none" viewBox="0 0 100 100">
+                <path id="eq-curve-path" d="" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"></path>
+              </svg>
+
+              <div class="eq-bars-layer" id="eq-sliders-container"></div>
+            </div>
+
+            <div class="eq-count" style="margin-top:4px;">
+              <div class="eq-count-row">
+                <span>Число полос частот</span>
+                <span id="eq-slider-val">8</span>
+              </div>
+              <input type="range" id="eq-bands-count-slider" min="4" max="16" value="8" step="1" aria-label="Количество полос" oninput="changeEqBandsCount(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Хранилище -->
+        <div class="settings-tab-panel" id="tab-panel-storage">
+          <div class="setting-card">
+            <div class="setting-title" style="margin-bottom:6px;">Локальная папка загрузок</div>
+            <div class="setting-storage">
+              <span id="downloaded-count-label">0 скачанных треков</span>
+              <span id="storage-size-label">0 МБ на диске</span>
+            </div>
+            <p id="download-folder-label">Загрузка…</p>
+            <div class="setting-actions">
+              <button class="btn" onclick="changeDownloadFolder()">Выбрать папку</button>
+              <button class="btn" onclick="openDownloadFolder()">Открыть папку</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. О приложении -->
+        <div class="settings-tab-panel" id="tab-panel-about">
+          <div class="setting-card" style="text-align:center; padding: 24px;">
+            <img src="logo-cloud.png" style="height:36px; margin: 0 auto 12px; display:block;" alt="hurtmusic">
+            <h3 style="font-size:16px; font-weight:600; color:#fff;">hurtmusic</h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Версия 1.0.1 (Windows x64)</p>
+            <p style="font-size:11.5px; color:var(--text-tertiary); margin-top:12px; max-width:380px; margin-left:auto; margin-right:auto;">
+              Нативный независимый плеер для SoundCloud и офлайн-медиатеки с Моей волной, умным поиском и чистым звуком.
+            </p>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+              <button class="btn" onclick="checkOtaUpdate(true)">Проверить обновления</button>
+              <button class="btn" onclick="window.electronAPI && window.electronAPI.openExternal ? window.electronAPI.openExternal('https://github.com/hurters/hurtmusic') : null">GitHub</button>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <button class="icon-btn" style="width:24px; height:24px;" onclick="dismissOtaCard()" title="Закрыть" aria-label="Закрыть">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-
-    <div id="ota-card-body">Доступна обновлённая версия с исправлениями и улучшениями.</div>
-
-    <div id="ota-card-progress-box">
-      <div class="ota-progress-meta">
-        <span id="ota-progress-text">Загрузка</span>
-        <span id="ota-progress-speed"></span>
-      </div>
-      <div class="ota-progress-track"><div id="ota-progress-fill"></div></div>
-    </div>
-
-    <div id="ota-card-actions">
-      <button id="btn-ota-start" onclick="startOtaDownload()"><span>Обновить</span></button>
-      <button id="btn-ota-later" onclick="dismissOtaCard()">Отложить</button>
     </div>
   </div>
 
-  <!-- ── Toast + Windows media notification ── -->
-  <div id="toast" class="toast">Уведомление</div>
+  <!-- ── Toasts Container ── -->
+  <div id="toast-container"></div>
+  <div id="toast" class="toast" style="display:none;"></div>
 
+  <!-- ── Windows SMTC Overlay ── -->
   <div id="windows-smtc-toast">
     <div id="smtc-cover"><img id="smtc-cover-img" src="" alt="" /></div>
     <div class="smtc-meta">
@@ -579,112 +867,29 @@
     </div>
   </div>
 
-  <!-- ── Lyrics ── -->
-  <div id="lyrics-drawer-overlay">
-    <button class="icon-btn lyrics-close" onclick="toggleLyricsModal(false)" aria-label="Закрыть текст">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <div class="lyrics-panel">
-      <div class="lyrics-head">
-        <h2 id="lyrics-track-title">Текст песни</h2>
-        <p id="lyrics-track-artist">Синхронизированные строки</p>
-      </div>
-      <div id="lyrics-lines-container">
-        <div class="lyrics-placeholder">Включите трек для синхронизации текста…</div>
-      </div>
+  <!-- ── OTA Updater Overlay ── -->
+  <div id="ota-modal-card">
+    <div class="ota-head">
+      <div class="ota-pulse-dot"></div>
+      <div class="ota-title">Доступно обновление HurtMusic</div>
+      <button class="ota-close-btn" onclick="dismissOtaModal()" aria-label="Закрыть">
+        <svg width="14" height="14"><use href="#icon-close"/></svg>
+      </button>
+    </div>
+    <div class="ota-version" id="ota-version-name">v1.0.1</div>
+    <div class="ota-notes" id="ota-release-notes">Загрузка информации...</div>
+    <div id="ota-progress-container" class="ota-progress-wrap" style="display:none;">
+      <div class="ota-progress-bar"><div class="ota-progress-fill" id="ota-progress-fill"></div></div>
+      <div class="ota-progress-text" id="ota-progress-text">0%</div>
+    </div>
+    <div class="ota-actions" id="ota-actions-row">
+      <button class="btn ota-btn-secondary" onclick="dismissOtaModal()">Позже</button>
+      <button class="btn ota-btn-primary" id="btn-ota-action" onclick="handleOtaAction()">Обновить сейчас</button>
     </div>
   </div>
 
-  <!-- ── Settings ── -->
-  <div id="settings-modal-overlay">
-    <div class="settings-panel">
-      <div class="settings-head">
-        <h2>Настройки</h2>
-        <button class="icon-btn" onclick="toggleSettingsModal(false)" aria-label="Закрыть настройки">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="settings-body">
-
-        <div class="setting-card">
-          <div class="setting-title" style="margin-bottom:10px;">Тема оформления</div>
-          <div class="setting-split">
-            <button class="theme-option" id="btn-theme-dark" onclick="setTheme('dark')" style="border-color:rgba(255,255,255,0.18); background:#232325; color:var(--text-primary);">Hurt Dark</button>
-            <button class="theme-option" id="btn-theme-light" onclick="setTheme('vinyl')">Винил</button>
-          </div>
-        </div>
-
-        <div class="setting-card">
-          <div class="setting-row">
-            <div class="setting-title">Разрешение экрана</div>
-            <span class="setting-value" id="res-badge">Авто</span>
-          </div>
-          <select id="res-select" onchange="changeResolutionPreset(this.value)">
-            <option value="auto" selected>Автоопределение</option>
-            <option value="1440x1080">1440 × 1080 (4:3)</option>
-            <option value="1920x1080">1920 × 1080 (16:9)</option>
-            <option value="1280x720">1280 × 720 (16:9)</option>
-            <option value="1024x768">1024 × 768 (4:3)</option>
-          </select>
-        </div>
-
-        <div class="setting-card">
-          <div class="setting-row">
-            <div class="setting-title">Плавный переход между треками</div>
-            <span class="setting-value" id="crossfade-val-label">0 сек (выкл.)</span>
-          </div>
-          <p class="setting-hint">Треки перетекают друг в друга без тишины в конце.</p>
-          <input type="range" id="crossfade-slider" min="0" max="8" value="0" step="1" aria-label="Кроссфейд" oninput="changeCrossfade(this.value)">
-        </div>
-
-        <div class="setting-card">
-          <div class="setting-row">
-            <div class="setting-title">Эквалайзер</div>
-            <span class="setting-value" id="eq-bands-label">8 полос</span>
-          </div>
-
-          <div class="eq-presets">
-            <button class="btn" onclick="applyEqPreset('flat')">Flat</button>
-            <button class="btn" onclick="applyEqPreset('bass')">Bass Boost</button>
-            <button class="btn" onclick="applyEqPreset('vocal')">Vocal</button>
-            <button class="btn" onclick="applyEqPreset('electronic')">Club/Phonk</button>
-          </div>
-
-          <div class="eq-count">
-            <div class="eq-count-row">
-              <span>Количество полос</span>
-              <span id="eq-slider-val">8</span>
-            </div>
-            <input type="range" id="eq-bands-count-slider" min="4" max="16" value="8" step="1" aria-label="Количество полос" oninput="changeEqBandsCount(this.value)">
-          </div>
-
-          <div id="eq-sliders-container"></div>
-        </div>
-
-        <div class="setting-card">
-          <div class="setting-title" style="margin-bottom:6px;">Хранилище музыки</div>
-          <div class="setting-storage">
-            <span id="downloaded-count-label">0 скачанных треков</span>
-            <span id="storage-size-label">0 МБ на диске</span>
-          </div>
-          <p id="download-folder-label">Загрузка…</p>
-          <div class="setting-actions">
-            <button class="btn" onclick="changeDownloadFolder()">Выбрать папку</button>
-            <button class="btn" onclick="openDownloadFolder()">Открыть папку</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <script src="hls.min.js" defer></script>
-  <script src="audio-visualizer.js" defer></script>
-  <script src="renderer.js" defer></script>
+  <script src="hls.min.js"></script>
+  <script src="audio-visualizer.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>
