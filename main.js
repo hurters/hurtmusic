@@ -435,10 +435,10 @@ ipcMain.handle('online:checkBypass', async () => {
   return await laneOnlineEngine.checkConnectivity();
 });
 
-ipcMain.handle('online:getSimilarTracks', async (event, trackId, artistHint) => {
+ipcMain.handle('online:getSimilarTracks', async (event, trackId, artistHint, limit) => {
   try {
-    console.log(`[IPC] online:getSimilarTracks called: trackId=${trackId}, artistHint=${artistHint}`);
-    const tracks = await laneOnlineEngine.getSimilarTracks(trackId, artistHint);
+    console.log(`[IPC] online:getSimilarTracks called: trackId=${trackId}, artistHint=${artistHint}, limit=${limit}`);
+    const tracks = await laneOnlineEngine.getSimilarTracks(trackId, artistHint, limit || 25);
     console.log(`[IPC] online:getSimilarTracks returning ${tracks.length} tracks`);
     return tracks;
   } catch (err) {

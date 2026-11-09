@@ -44,6 +44,49 @@ function isTrackCurrentlyPlaying(track) {
 }
 window.isTrackCurrentlyPlaying = isTrackCurrentlyPlaying;
 
+function loadRecentWaveIds() {
+  const set = new Set();
+  try {
+    const raw = localStorage.getItem('hurtmusic_recent_wave_ids');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        for (const id of arr.slice(-200)) {
+          if (id) set.add(String(id));
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error loading recent wave IDs:', e);
+  }
+  return set;
+}
+
+function recordPlayedWaveTrack(track) {
+  if (!track) return;
+  const rawId = String(track.originalId || track.id || '').replace(/^local_dl_/, '');
+  if (!rawId) return;
+  if (!state.seenWaveIds) state.seenWaveIds = new Set();
+  state.seenWaveIds.add(rawId);
+  try {
+    let arr = [];
+    const raw = localStorage.getItem('hurtmusic_recent_wave_ids');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) arr = parsed;
+    }
+    const idx = arr.indexOf(rawId);
+    if (idx !== -1) arr.splice(idx, 1);
+    arr.push(rawId);
+    if (arr.length > 200) arr = arr.slice(-200);
+    localStorage.setItem('hurtmusic_recent_wave_ids', JSON.stringify(arr));
+  } catch (e) {
+    console.warn('Error saving recent wave IDs:', e);
+  }
+}
+window.loadRecentWaveIds = loadRecentWaveIds;
+window.recordPlayedWaveTrack = recordPlayedWaveTrack;
+
 function loadStoredFavorites() {
   const map = new Map();
   try {
@@ -114,7 +157,9 @@ const state = {
   myWaveQueue: [],
   myWaveHistory: [],
   myWaveMood: 'similar', // 'similar' | 'favorites' | 'energetic' | 'chill' | 'fresh'
-  seenWaveIds: new Set(),
+  seenWaveIds: loadRecentWaveIds(),
+  waveError: false,
+  lastWaveDebugLog: null,
   isFetchingWaveTracks: false,
   waveSeedTrack: null,
   playbackRequestId: 0
@@ -165,18 +210,18 @@ async function changeResolutionPreset(preset) {
   localStorage.setItem('hurtmusic_res_preset', preset);
 
   if (preset === 'auto') {
-    if (window.electronAPI && window.electronAPI.getScreenMetrics) {
-      const m = await window.electronAPI.getScreenMetrics();
+    if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getScreenMetrics) {
+      const m = await (window.__testMockAPI || window.electronAPI).getScreenMetrics();
       const w = Math.round(m.workWidth * 0.94);
       const h = Math.round(m.workHeight * 0.92);
-      if (window.electronAPI.setResolution) {
-        await window.electronAPI.setResolution({ width: w, height: h });
+      if ((window.__testMockAPI || window.electronAPI).setResolution) {
+        await (window.__testMockAPI || window.electronAPI).setResolution({ width: w, height: h });
       }
     }
   } else {
     const [w, h] = preset.split('x').map(Number);
-    if (w && h && window.electronAPI && window.electronAPI.setResolution) {
-      await window.electronAPI.setResolution({ width: w, height: h });
+    if (w && h && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).setResolution) {
+      await (window.__testMockAPI || window.electronAPI).setResolution({ width: w, height: h });
     }
   }
 
@@ -203,9 +248,9 @@ async function initResolutionStabilizer() {
     let is4x3 = is1440x1080 || screenAspect < 1.5 || winAspect < 1.48;
 
     // Fetch accurate OS display metrics via IPC if available
-    if (window.electronAPI && window.electronAPI.getScreenMetrics) {
+    if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getScreenMetrics) {
       try {
-        const metrics = await window.electronAPI.getScreenMetrics();
+        const metrics = await (window.__testMockAPI || window.electronAPI).getScreenMetrics();
         if (metrics.is1440x1080) is1440x1080 = true;
         if (metrics.is4x3) is4x3 = true;
       } catch (err) {
@@ -251,8 +296,8 @@ async function initResolutionStabilizer() {
 
   window.applyResolutionRules = applyResolutionRules;
   window.addEventListener('resize', applyResolutionRules);
-  if (window.electronAPI && window.electronAPI.onScreenMetricsChanged) {
-    window.electronAPI.onScreenMetricsChanged(() => applyResolutionRules());
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).onScreenMetricsChanged) {
+    (window.__testMockAPI || window.electronAPI).onScreenMetricsChanged(() => applyResolutionRules());
   }
 
   // Restore saved resolution preset
@@ -275,32 +320,32 @@ async function initResolutionStabilizer() {
 }
 
 function initTrayListeners() {
-  if (!window.electronAPI) return;
+  if (!(window.__testMockAPI || window.electronAPI)) return;
 
-  if (window.electronAPI.onTrayPlayPause) {
-    window.electronAPI.onTrayPlayPause(() => togglePlayPause());
+  if ((window.__testMockAPI || window.electronAPI).onTrayPlayPause) {
+    (window.__testMockAPI || window.electronAPI).onTrayPlayPause(() => togglePlayPause());
   }
-  if (window.electronAPI.onTrayNext) {
-    window.electronAPI.onTrayNext(() => playNext());
+  if ((window.__testMockAPI || window.electronAPI).onTrayNext) {
+    (window.__testMockAPI || window.electronAPI).onTrayNext(() => playNext());
   }
-  if (window.electronAPI.onTrayPrev) {
-    window.electronAPI.onTrayPrev(() => playPrevious());
+  if ((window.__testMockAPI || window.electronAPI).onTrayPrev) {
+    (window.__testMockAPI || window.electronAPI).onTrayPrev(() => playPrevious());
   }
-  if (window.electronAPI.onTrayFavorite) {
-    window.electronAPI.onTrayFavorite(() => toggleCurrentTrackFavorite());
+  if ((window.__testMockAPI || window.electronAPI).onTrayFavorite) {
+    (window.__testMockAPI || window.electronAPI).onTrayFavorite(() => toggleCurrentTrackFavorite());
   }
 
   // Mini-Player IPC state listener
-  if (window.electronAPI.onMiniPlayerState) {
-    window.electronAPI.onMiniPlayerState((isMini) => {
+  if ((window.__testMockAPI || window.electronAPI).onMiniPlayerState) {
+    (window.__testMockAPI || window.electronAPI).onMiniPlayerState((isMini) => {
       document.body.classList.toggle('mini-player-mode', isMini);
       updateMiniPlayerUI();
     });
   }
 
   // Global Media Keys & Mini-Player Hotkeys (MediaPlayPause, MediaNext, MediaPrev)
-  if (window.electronAPI.onGlobalHotkey) {
-    window.electronAPI.onGlobalHotkey((action) => {
+  if ((window.__testMockAPI || window.electronAPI).onGlobalHotkey) {
+    (window.__testMockAPI || window.electronAPI).onGlobalHotkey((action) => {
       if (action === 'play-pause') {
         togglePlayPause();
       } else if (action === 'next') {
@@ -395,15 +440,15 @@ function initWindowControls() {
   const iconMax = document.getElementById('icon-max');
   const iconRestore = document.getElementById('icon-restore');
 
-  if (window.electronAPI) {
-    btnMin.addEventListener('click', () => window.electronAPI.minimize());
+  if ((window.__testMockAPI || window.electronAPI)) {
+    btnMin.addEventListener('click', () => (window.__testMockAPI || window.electronAPI).minimize());
     btnMax.addEventListener('click', async () => {
-      const isMax = await window.electronAPI.maximize();
+      const isMax = await (window.__testMockAPI || window.electronAPI).maximize();
       updateMaxIcon(isMax);
     });
-    btnClose.addEventListener('click', () => window.electronAPI.close());
+    btnClose.addEventListener('click', () => (window.__testMockAPI || window.electronAPI).close());
 
-    window.electronAPI.onWindowStateChanged(({ isMaximized }) => {
+    (window.__testMockAPI || window.electronAPI).onWindowStateChanged(({ isMaximized }) => {
       updateMaxIcon(isMaximized);
     });
   }
@@ -420,9 +465,9 @@ function initWindowControls() {
 // 2. Offline Downloads & Library Management
 // ─────────────────────────────────────────────────────────────
 async function loadDownloadedTracks() {
-  if (window.electronAPI && window.electronAPI.getDownloadedTracks) {
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getDownloadedTracks) {
     try {
-      const list = await window.electronAPI.getDownloadedTracks();
+      const list = await (window.__testMockAPI || window.electronAPI).getDownloadedTracks();
       state.downloadedTracks = list || [];
       state.downloadedTracksMap.clear();
 
@@ -456,7 +501,7 @@ async function handleTrackDownload(trackId) {
   if (existing) {
     if (confirm(`Удалить "${existing.title}" из скачанных треков?`)) {
       showToast(`Удаление: ${existing.title}...`);
-      await window.electronAPI.deleteDownloadedTrack(existing.id);
+      await (window.__testMockAPI || window.electronAPI).deleteDownloadedTrack(existing.id);
       await loadDownloadedTracks();
       showToast(`Трек удален с диска`);
       applyFilters();
@@ -477,7 +522,7 @@ async function handleTrackDownload(trackId) {
   renderWaveQueue();
 
   try {
-    const res = await window.electronAPI.downloadTrack(track);
+    const res = await (window.__testMockAPI || window.electronAPI).downloadTrack(track);
     if (res && res.success) {
       showToast(`Загрузка завершена: ${track.title}`);
       await loadDownloadedTracks();
@@ -572,8 +617,8 @@ async function playTrackDirect(track, pushToHistory = true) {
     state.isLoadingStream = true;
 
     let streamUrl = track.streamUrl;
-    if (!streamUrl && window.electronAPI && window.electronAPI.getOnlineStreamUrl) {
-      streamUrl = await window.electronAPI.getOnlineStreamUrl(track.id);
+    if (!streamUrl && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getOnlineStreamUrl) {
+      streamUrl = await (window.__testMockAPI || window.electronAPI).getOnlineStreamUrl(track.id);
     }
 
     // Check if another track was clicked while this stream URL was resolving
@@ -649,18 +694,11 @@ async function playTrackDirect(track, pushToHistory = true) {
     });
   }
 
-  // If My Wave is active, dynamically re-anchor recommendations to this newly played track
-  const trackCanId = (track.originalId || track.id);
-  const seedCanId = state.waveSeedTrack ? (state.waveSeedTrack.originalId || state.waveSeedTrack.id) : null;
+  // Record wave history if active, but DO NOT re-seed or rebuild the queue on click!
   if (state.isMyWaveActive) {
-    if (!state.waveSeedTrack || seedCanId !== trackCanId) {
-      state.waveSeedTrack = track;
-      if (state.myWaveMood === 'similar') {
-        state.myWaveQueue = []; // Clear outdated queue so upcoming songs match this song!
-        fetchWaveRecommendations('similar', false);
-      }
-    }
-  } else {
+    recordPlayedWaveTrack(track);
+  } else if (!state.waveSeedTrack) {
+    // Only set as candidate default seed when no seed exists yet
     state.waveSeedTrack = track;
   }
 
@@ -810,9 +848,9 @@ function setPlaybackState(isPlaying) {
 window.setPlaybackState = setPlaybackState;
 
 function syncPlaybackWithMain() {
-  if (!window.electronAPI || !window.electronAPI.sendPlaybackState) return;
+  if (!(window.__testMockAPI || window.electronAPI) || !(window.__testMockAPI || window.electronAPI).sendPlaybackState) return;
   const track = state.currentPlayingTrack;
-  window.electronAPI.sendPlaybackState({
+  (window.__testMockAPI || window.electronAPI).sendPlaybackState({
     title: track ? track.title : '',
     artist: track ? track.artist : '',
     isPlaying: state.isPlaying
@@ -820,10 +858,10 @@ function syncPlaybackWithMain() {
 }
 
 function syncDiscordRPC() {
-  if (!window.electronAPI || !window.electronAPI.updateDiscordRPC) return;
+  if (!(window.__testMockAPI || window.electronAPI) || !(window.__testMockAPI || window.electronAPI).updateDiscordRPC) return;
   const track = state.currentPlayingTrack;
   if (!track) {
-    window.electronAPI.clearDiscordRPC();
+    (window.__testMockAPI || window.electronAPI).clearDiscordRPC();
     return;
   }
 
@@ -831,7 +869,7 @@ function syncDiscordRPC() {
     ? audio.duration
     : (track.duration || 0);
 
-  window.electronAPI.updateDiscordRPC({
+  (window.__testMockAPI || window.electronAPI).updateDiscordRPC({
     title: track.title,
     artist: track.artist,
     album: state.isMyWaveActive ? 'Моя волна' : (track.album || 'hurtmusic'),
@@ -1721,10 +1759,10 @@ async function selectSearchCategory(category) {
   if (heroSubtitle) heroSubtitle.textContent = meta.sub;
 
   let results = [];
-  if (window.electronAPI && window.electronAPI.getOnlineCategory) {
-    results = await window.electronAPI.getOnlineCategory(category);
-  } else if (window.electronAPI && window.electronAPI.searchOnline) {
-    results = await window.electronAPI.searchOnline(category);
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getOnlineCategory) {
+    results = await (window.__testMockAPI || window.electronAPI).getOnlineCategory(category);
+  } else if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+    results = await (window.__testMockAPI || window.electronAPI).searchOnline(category);
   }
 
   state.onlineTracks = results || [];
@@ -1813,8 +1851,8 @@ async function performOnlineSearch(query) {
   if (heroTitle) heroTitle.textContent = 'Результаты: ' + q;
   if (heroSubtitle) heroSubtitle.textContent = 'Оригинальные треки без спама, старых сборников и 1-часовых миксов.';
 
-  if (window.electronAPI && window.electronAPI.searchOnline) {
-    const results = await window.electronAPI.searchOnline(q);
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+    const results = await (window.__testMockAPI || window.electronAPI).searchOnline(q);
     state.onlineTracks = results || [];
     showToast('Найдено ' + state.onlineTracks.length + ' треков');
   } else {
@@ -2220,31 +2258,159 @@ function detectTrackMoodPalette(track) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+// 8. My Wave (Моя волна) Engine: Seed, Filters & Queue Logic
+// ─────────────────────────────────────────────────────────────
+
+function normalizeArtistName(artist) {
+  if (!artist || typeof artist !== 'string') return '';
+  return artist
+    .toLowerCase()
+    .replace(/\s*(feat\.|ft\.|featuring|prod\.|produced by|x|&|vs\.?)\s+.*$/i, '')
+    .replace(/[^a-zа-я0-9]/gi, '')
+    .trim();
+}
+
+function logWaveDebug(debugData) {
+  state.lastWaveDebugLog = debugData;
+  window.lastWaveDebugLog = debugData;
+
+  const isDev = typeof process !== 'undefined' && (process.env.ELECTRON_IS_TEST || process.env.NODE_ENV === 'development');
+  if (isDev || localStorage.getItem('hurtmusic_wave_debug') === '1') {
+    console.log(
+      '%c[MyWave Engine Debug]%c ' +
+      '\n  Seed: ' + debugData.seed +
+      '\n  Mode: ' + debugData.mode +
+      '\n  Sources: ' + JSON.stringify(debugData.sources) +
+      '\n  Total raw candidates: ' + debugData.totalRaw +
+      '\n  Filtered breakdown:' +
+      '\n    - already_played (200 history): ' + debugData.filtered.alreadyPlayed +
+      '\n    - duplicate_or_current: ' + debugData.filtered.duplicate +
+      '\n    - duration_out_of_range (<90s or >480s): ' + debugData.filtered.durationOutOfRange +
+      '\n    - artist_limit (>2 per 20): ' + debugData.filtered.artistLimit +
+      '\n    - consecutive_cover: ' + debugData.filtered.consecutiveCover +
+      '\n  Accepted into queue: ' + debugData.accepted,
+      'color: #f59e0b; font-weight: bold;',
+      'color: inherit;'
+    );
+  }
+}
+
+function filterAndRankWaveCandidates(candidates, sourceCounts, existingQueue, seedTrack) {
+  const seedCanId = seedTrack ? String(seedTrack.originalId || seedTrack.id || '').replace(/^local_dl_/, '') : '';
+  const currentCanId = state.currentPlayingTrack ? String(state.currentPlayingTrack.originalId || state.currentPlayingTrack.id || '').replace(/^local_dl_/, '') : '';
+
+  const debug = {
+    seed: seedTrack ? `${seedTrack.artist} — ${seedTrack.title} (${seedTrack.originalId || seedTrack.id})` : 'none',
+    mode: state.myWaveMood,
+    sources: { ...sourceCounts },
+    totalRaw: candidates.length,
+    filtered: {
+      alreadyPlayed: 0,
+      duplicate: 0,
+      durationOutOfRange: 0,
+      artistLimit: 0,
+      consecutiveCover: 0
+    },
+    accepted: 0
+  };
+
+  // Seen IDs set from existing queue
+  const queueIds = new Set();
+  const queueTitles = new Set();
+  for (const t of existingQueue) {
+    const cid = String(t.originalId || t.id || '').replace(/^local_dl_/, '');
+    if (cid) queueIds.add(cid);
+    queueTitles.add((t.title || '').toLowerCase().trim());
+  }
+
+  // Pre-populate artist counts in the last 20 items of existing queue
+  const recentSlice = existingQueue.slice(-20);
+  const acceptedTracks = [];
+  let lastCoverUrl = recentSlice.length > 0 ? (recentSlice[recentSlice.length - 1].coverUrl || '') : '';
+
+  for (const track of candidates) {
+    if (!track) continue;
+    const canId = String(track.originalId || track.id || '').replace(/^local_dl_/, '');
+    if (!canId) continue;
+
+    // 1. Exclude already played (200 history stored between sessions)
+    if (state.seenWaveIds && state.seenWaveIds.has(canId)) {
+      debug.filtered.alreadyPlayed++;
+      continue;
+    }
+
+    // 2. Exclude duplicates with current track, seed track, or queue
+    const normTitle = (track.title || '').toLowerCase().trim();
+    if (canId === seedCanId || canId === currentCanId || queueIds.has(canId) || queueTitles.has(normTitle)) {
+      debug.filtered.duplicate++;
+      continue;
+    }
+
+    // 3. Duration filter: 90s (1.5 min) to 480s (8 min)
+    let dur = typeof track.duration === 'number' ? track.duration : 0;
+    if (!dur && track.durationFormatted) {
+      const parts = track.durationFormatted.split(':').map(Number);
+      if (parts.length === 2) dur = parts[0] * 60 + parts[1];
+    }
+    if (dur > 0 && (dur < 90 || dur > 480)) {
+      debug.filtered.durationOutOfRange++;
+      continue;
+    }
+
+    // 4. Artist limit: no more than 2 tracks of the same artist per sliding 20 window
+    const artistNorm = normalizeArtistName(track.artist);
+    if (artistNorm) {
+      const currentCombined = [...existingQueue.slice(-20), ...acceptedTracks.slice(-20)];
+      const artistMatches = currentCombined.filter(t => normalizeArtistName(t.artist) === artistNorm);
+      if (artistMatches.length >= 2) {
+        debug.filtered.artistLimit++;
+        continue;
+      }
+    }
+
+    // 5. Consecutive cover filter: do not repeat exact same cover consecutively
+    const thisCover = track.coverUrl || '';
+    if (thisCover && lastCoverUrl && thisCover === lastCoverUrl) {
+      debug.filtered.consecutiveCover++;
+      continue;
+    }
+
+    // Candidate accepted!
+    queueIds.add(canId);
+    queueTitles.add(normTitle);
+    lastCoverUrl = thisCover;
+    acceptedTracks.push(track);
+  }
+
+  debug.accepted = acceptedTracks.length;
+  logWaveDebug(debug);
+  return { acceptedTracks, debug };
+}
+
 async function toggleMyWaveMode(forceStart = false) {
   if (state.isMyWaveActive && !forceStart) {
     state.isMyWaveActive = false;
     updateMyWaveUI();
-    showToast('Моя волна выключена');
     return;
   }
 
   state.isMyWaveActive = true;
   updateMyWaveUI();
-  showToast('Моя волна включена');
 
-  // Immediately anchor to current playing track and refresh the queue so recommendations are actually similar!
-  if (state.currentPlayingTrack) {
-    state.waveSeedTrack = state.currentPlayingTrack;
-    state.myWaveQueue = [];
-    showToast(`Волна подбирает треки по «${state.currentPlayingTrack.title}»`);
-    await fetchWaveRecommendations(state.myWaveMood, false);
-    if (audio.paused) {
-      audio.play().then(() => setPlaybackState(true)).catch(() => {});
-    }
-  } else if (state.myWaveQueue.length === 0) {
-    await fetchWaveRecommendations(state.myWaveMood, true);
+  // Explicit user launch of wave: lock seed
+  if (!state.waveSeedTrack) {
+    state.waveSeedTrack = state.currentPlayingTrack || (state.favorites.size > 0 ? Array.from(state.favorites.values())[0] : null) || (state.filteredTracks.length > 0 ? state.filteredTracks[0] : null);
+  }
+
+  if (state.myWaveQueue.length === 0) {
+    await fetchWaveRecommendations(state.myWaveMood, true, true);
   } else if (audio.paused) {
-    playNextMyWaveTrack();
+    if (state.currentPlayingTrack) {
+      audio.play().then(() => setPlaybackState(true)).catch(() => {});
+    } else {
+      await playNextMyWaveTrack();
+    }
   }
 }
 
@@ -2268,181 +2434,359 @@ async function setWaveMood(mood) {
   state.isMyWaveActive = true;
   updateMyWaveUI();
 
-  const labels = {
-    similar: 'По текущему звучанию',
-    favorites: 'По вашим любимым трекам',
-    energetic: 'Движ и бодрый ритм',
-    chill: 'Спокойствие и релакс',
-    fresh: 'Свежие релизы 2026'
-  };
-  
-
+  // Changing mood resets the queue and fetches candidates tailored for this mood
   state.myWaveQueue = [];
-  await fetchWaveRecommendations(mood, false);
+  renderWaveQueue();
+  await fetchWaveRecommendations(mood, false, true);
+
   if (state.isPlaying && state.isMyWaveActive) {
     await playNextMyWaveTrack();
   }
 }
 
-async function fetchWaveRecommendations(mood = 'similar', autoPlay = false) {
+async function startWaveFromTrack(track) {
+  if (!track) return;
+  state.waveSeedTrack = track;
+  state.myWaveMood = 'similar';
+  state.isMyWaveActive = true;
+  state.myWaveQueue = [];
+  updateMyWaveUI();
+  renderWaveQueue();
+  await playTrackDirect(track, false);
+  await fetchWaveRecommendations('similar', false, true);
+}
+window.startWaveFromTrack = startWaveFromTrack;
+
+async function refreshWaveStream() {
+  state.waveError = false;
+  state.myWaveQueue = [];
+  renderWaveQueue();
+  await fetchWaveRecommendations(state.myWaveMood, false, true);
+}
+window.refreshWaveStream = refreshWaveStream;
+window.refreshWaveQueue = refreshWaveStream;
+
+async function fetchWaveRecommendations(mood = 'similar', autoPlay = false, isReset = false) {
   if (state.isFetchingWaveTracks) return;
   state.isFetchingWaveTracks = true;
+  state.waveError = false;
 
-  const descEl = document.getElementById('wave-current-source-desc');
   const statusEl = document.getElementById('wave-status-text');
-  if (statusEl) statusEl.textContent = 'Генерация потока похожих треков...';
+  if (statusEl && !state.isPlaying) {
+    statusEl.textContent = 'Подбираем персональную волну...';
+  }
+
+  const sourceCounts = {};
+  let rawCandidates = [];
 
   try {
-    let recommendations = [];
+    // 1. Determine seed
+    if (!state.waveSeedTrack) {
+      state.waveSeedTrack = state.currentPlayingTrack || (state.favorites.size > 0 ? Array.from(state.favorites.values())[0] : null) || (state.filteredTracks.length > 0 ? state.filteredTracks[0] : null);
+    }
+    const seed = state.waveSeedTrack;
 
     if (mood === 'similar') {
-      const seed = state.currentPlayingTrack || state.waveSeedTrack || (state.favorites.size > 0 ? Array.from(state.favorites.values())[0] : null) || (state.filteredTracks.length > 0 ? state.filteredTracks[0] : null);
-      if (seed) {
-        state.waveSeedTrack = seed;
-        if (descEl) descEl.textContent = `Поток на основе: ${seed.artist} — ${seed.title}`;
-        if (window.electronAPI && window.electronAPI.getSimilarTracks) {
-          recommendations = await window.electronAPI.getSimilarTracks(seed.originalId || seed.id, seed.artist);
-        }
+      // SOURCE 1: SoundCloud related tracks for seed
+      if (seed && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getSimilarTracks) {
+        const related = await (window.__testMockAPI || window.electronAPI).getSimilarTracks(seed.originalId || seed.id, seed.artist, 30);
+        sourceCounts['seed_related'] = (related || []).length;
+        rawCandidates.push(...(related || []));
       }
-    } else if (mood === 'favorites') {
-      const favList = Array.from(state.favorites.values());
-      if (favList.length > 0) {
-        const randomFav = favList[Math.floor(Math.random() * favList.length)];
-        state.waveSeedTrack = randomFav;
-        if (descEl) descEl.textContent = `Поток на основе любимой музыки (${randomFav.artist} — ${randomFav.title})`;
-        if (window.electronAPI && window.electronAPI.getSimilarTracks) {
-          recommendations = await window.electronAPI.getSimilarTracks(randomFav.originalId || randomFav.id, randomFav.artist);
-        }
-      } else {
-        showToast('В любимых пока нет треков');
-      }
-    } else if (mood === 'energetic') {
-      if (descEl) descEl.textContent = 'Энергичный поток для активности';
-      const seedArtist = (state.waveSeedTrack && state.waveSeedTrack.artist) || '';
-      const query = seedArtist ? `${seedArtist} remix energy` : 'phonk remix club bass 2026';
-      if (window.electronAPI && window.electronAPI.searchOnline) {
-        recommendations = await window.electronAPI.searchOnline(query);
-      }
-    } else if (mood === 'chill') {
-      if (descEl) descEl.textContent = 'Спокойный атмосферный поток для отдыха';
-      if (window.electronAPI && window.electronAPI.searchOnline) {
-        recommendations = await window.electronAPI.searchOnline('lofi ambient chill cloud indie relax');
-      }
-    } else if (mood === 'fresh') {
-      if (descEl) descEl.textContent = 'Свежие релизы этого года';
-      const seedArtist = (state.waveSeedTrack && state.waveSeedTrack.artist) || '';
-      const query = seedArtist ? `${seedArtist} 2026` : 'новинки музыки 2026 премьера';
-      if (window.electronAPI && window.electronAPI.searchOnline) {
-        recommendations = await window.electronAPI.searchOnline(query);
-      }
-    }
 
-    // Smart fallback if still empty: search by seed artist, not generic radio pop
-    if (!recommendations || recommendations.length === 0) {
-      const seedArtist = (state.waveSeedTrack && state.waveSeedTrack.artist && state.waveSeedTrack.artist !== 'Unknown')
-        ? state.waveSeedTrack.artist
-        : ((state.currentPlayingTrack && state.currentPlayingTrack.artist) ? state.currentPlayingTrack.artist : '');
-      if (seedArtist && window.electronAPI && window.electronAPI.searchOnline) {
-        recommendations = await window.electronAPI.searchOnline(seedArtist);
-      }
-    }
-
-    // Filter duplicates
-    if (recommendations && recommendations.length > 0) {
-      const curId = state.currentPlayingTrack ? (state.currentPlayingTrack.originalId || state.currentPlayingTrack.id) : null;
-      for (const t of recommendations) {
-        const canId = (t.originalId || t.id).replace('local_dl_', '');
-        if (!state.seenWaveIds.has(canId) && canId !== curId) {
-          // Check not already in queue
-          if (!state.myWaveQueue.some(q => (q.originalId || q.id) === t.id)) {
-            state.myWaveQueue.push(t);
+      // SOURCE 2: Related to up to 2 favorites
+      if (state.favorites && state.favorites.size > 0) {
+        const favList = Array.from(state.favorites.values());
+        const sampleFavs = favList.slice(0, 2);
+        for (const fav of sampleFavs) {
+          if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getSimilarTracks) {
+            const favRel = await (window.__testMockAPI || window.electronAPI).getSimilarTracks(fav.originalId || fav.id, fav.artist, 10);
+            sourceCounts[`fav_related_${fav.artist}`] = (favRel || []).length;
+            rawCandidates.push(...(favRel || []));
           }
         }
       }
+
+      // SOURCE 3: Search fallback if candidates are scarce
+      if (rawCandidates.length < 15 && seed && seed.artist && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+        const searchRes = await (window.__testMockAPI || window.electronAPI).searchOnline(seed.artist);
+        sourceCounts['artist_search'] = (searchRes || []).length;
+        rawCandidates.push(...(searchRes || []));
+      }
+
+    } else if (mood === 'favorites') {
+      // SOURCE 1: User favorites
+      const favList = Array.from(state.favorites.values());
+      sourceCounts['favorites_direct'] = favList.length;
+      rawCandidates.push(...favList);
+
+      // SOURCE 2: Related to 2 random favorites
+      if (favList.length > 0) {
+        const shuffledFavs = [...favList].sort(() => 0.5 - Math.random()).slice(0, 2);
+        for (const fav of shuffledFavs) {
+          if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getSimilarTracks) {
+            const favRel = await (window.__testMockAPI || window.electronAPI).getSimilarTracks(fav.originalId || fav.id, fav.artist, 15);
+            sourceCounts[`fav_related_${fav.artist}`] = (favRel || []).length;
+            rawCandidates.push(...(favRel || []));
+          }
+        }
+      }
+
+    } else if (mood === 'energetic') {
+      // SOURCE 1 & 2: High energy genres & queries
+      const queries = [
+        'phonk drift bass workout',
+        'hardwave trap energy electronic',
+        'drum and bass fast dance 2026'
+      ];
+      if (seed && seed.artist) {
+        queries.unshift(`${seed.artist} remix energy`);
+      }
+      for (const q of queries.slice(0, 3)) {
+        if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+          const res = await (window.__testMockAPI || window.electronAPI).searchOnline(q);
+          sourceCounts[`energy_${q}`] = (res || []).length;
+          rawCandidates.push(...(res || []));
+        }
+      }
+
+    } else if (mood === 'chill') {
+      // SOURCE 1 & 2: Relaxing, atmospheric queries
+      const queries = [
+        'lofi hip hop chill study beats',
+        'ambient relax dream aesthetic',
+        'slowed reverb indie chill 2026'
+      ];
+      if (seed && seed.artist) {
+        queries.unshift(`${seed.artist} acoustic slowed`);
+      }
+      for (const q of queries.slice(0, 3)) {
+        if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+          const res = await (window.__testMockAPI || window.electronAPI).searchOnline(q);
+          sourceCounts[`chill_${q}`] = (res || []).length;
+          rawCandidates.push(...(res || []));
+        }
+      }
+
+    } else if (mood === 'fresh') {
+      // SOURCE 1 & 2: Fresh releases and last 30 days filter
+      const queries = [
+        `${(seed && seed.artist) ? seed.artist : 'rap electronic'} 2026 new release`,
+        'новинки музыки 2026 свежие треки'
+      ];
+      for (const q of queries) {
+        if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+          const res = await (window.__testMockAPI || window.electronAPI).searchOnline(q);
+          sourceCounts[`fresh_${q}`] = (res || []).length;
+          rawCandidates.push(...(res || []));
+        }
+      }
+
+      // Filter by creation date if available (within 30 days)
+      const now = Date.now();
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      rawCandidates = rawCandidates.filter(t => {
+        if (!t.createdAt) return true; // keep if date missing but query was fresh
+        const age = now - new Date(t.createdAt).getTime();
+        return age <= thirtyDaysMs;
+      });
+    }
+
+    // Filter and rank raw candidates
+    const currentQueue = isReset ? [] : state.myWaveQueue;
+    const { acceptedTracks } = filterAndRankWaveCandidates(rawCandidates, sourceCounts, currentQueue, state.waveSeedTrack);
+
+    if (acceptedTracks.length > 0) {
+      if (isReset) {
+        state.myWaveQueue = acceptedTracks;
+      } else {
+        appendWaveQueueItems(acceptedTracks);
+        state.myWaveQueue.push(...acceptedTracks);
+      }
+    } else if (isReset && state.myWaveQueue.length === 0) {
+      state.waveError = false; // Empty result state
     }
   } catch (err) {
     console.error('Error fetching wave recommendations:', err);
+    state.waveError = true;
   } finally {
     state.isFetchingWaveTracks = false;
   }
 
   updateMyWaveUI();
-  renderWaveQueue();
+  if (isReset) {
+    renderWaveQueue();
+  }
 
   if (autoPlay && (!state.currentPlayingTrack || audio.paused)) {
-    playNextMyWaveTrack();
+    await playNextMyWaveTrack();
   }
 }
 
 async function playNextMyWaveTrack() {
   if (state.currentPlayingTrack) {
-    const prevCanId = (state.currentPlayingTrack.originalId || state.currentPlayingTrack.id).replace('local_dl_', '');
-    state.seenWaveIds.add(prevCanId);
+    recordPlayedWaveTrack(state.currentPlayingTrack);
     state.myWaveHistory.push(state.currentPlayingTrack);
     if (state.myWaveHistory.length > 50) state.myWaveHistory.shift();
   }
 
   if (state.myWaveQueue.length === 0) {
-    showToast('Подбираем следующие похожие треки...');
-    await fetchWaveRecommendations(state.myWaveMood, false);
-  }
-
-  if (state.myWaveQueue.length === 0) {
-    const seedArtist = (state.waveSeedTrack && state.waveSeedTrack.artist) || (state.currentPlayingTrack && state.currentPlayingTrack.artist);
-    if (seedArtist && window.electronAPI && window.electronAPI.searchOnline) {
-      const fallback = await window.electronAPI.searchOnline(seedArtist);
-      state.myWaveQueue.push(...(fallback || []));
-    }
+    await fetchWaveRecommendations(state.myWaveMood, false, true);
   }
 
   const nextTrack = state.myWaveQueue.shift();
-  if (!nextTrack) return;
-
-  // Background prefetch if queue is low
-  if (state.myWaveQueue.length <= 3 && !state.isFetchingWaveTracks) {
-    prefetchWaveTracks(nextTrack);
+  if (!nextTrack) {
+    renderWaveQueue();
+    return;
   }
 
+  // Pre-fetch in background if queue is low (<= 5)
+  if (state.myWaveQueue.length <= 5 && !state.isFetchingWaveTracks) {
+    prefetchWaveTracks();
+  }
+
+  renderWaveQueue();
   await playTrackDirect(nextTrack, false);
 }
 
-async function prefetchWaveTracks(seedTrack) {
+async function prefetchWaveTracks() {
   if (state.isFetchingWaveTracks) return;
   state.isFetchingWaveTracks = true;
 
   try {
-    const seed = seedTrack || state.currentPlayingTrack || state.waveSeedTrack;
-    if (seed && window.electronAPI && window.electronAPI.getSimilarTracks) {
-      const more = await window.electronAPI.getSimilarTracks(seed.originalId || seed.id, seed.artist);
-      if (more && more.length) {
-        for (const t of more) {
-          const canId = (t.originalId || t.id).replace('local_dl_', '');
-          if (!state.seenWaveIds.has(canId) && !state.myWaveQueue.some(q => (q.originalId || q.id) === t.id)) {
-            state.myWaveQueue.push(t);
-          }
-        }
+    const seed = state.waveSeedTrack || state.currentPlayingTrack;
+    if (seed && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getSimilarTracks) {
+      const more = await (window.__testMockAPI || window.electronAPI).getSimilarTracks(seed.originalId || seed.id, seed.artist, 20);
+      const sourceCounts = { 'prefetch_related': (more || []).length };
+      const { acceptedTracks } = filterAndRankWaveCandidates(more || [], sourceCounts, state.myWaveQueue, seed);
+      if (acceptedTracks.length > 0) {
+        appendWaveQueueItems(acceptedTracks);
+        state.myWaveQueue.push(...acceptedTracks);
       }
     }
   } catch (err) {
     console.warn('Prefetch wave tracks error:', err);
   } finally {
     state.isFetchingWaveTracks = false;
-    renderWaveQueue();
   }
-}
-
-function refreshWaveQueue() {
-  state.myWaveQueue = [];
-  showToast('Обновление очереди Волны...');
-  fetchWaveRecommendations(state.myWaveMood, false);
 }
 
 function playWaveTrackAt(index) {
   if (index < 0 || index >= state.myWaveQueue.length) return;
+
+  // Record skipped tracks as played
+  for (let i = 0; i <= index; i++) {
+    recordPlayedWaveTrack(state.myWaveQueue[i]);
+  }
+
   const track = state.myWaveQueue[index];
-  state.myWaveQueue.splice(0, index + 1);
+  // Slice queue: remaining tracks continue down the list
+  state.myWaveQueue = state.myWaveQueue.slice(index + 1);
   state.isMyWaveActive = true;
-  playTrackDirect(track, true);
+
+  // Background prefetch if <= 5 remaining
+  if (state.myWaveQueue.length <= 5 && !state.isFetchingWaveTracks) {
+    prefetchWaveTracks();
+  }
+
+  // Play track without changing seed or resetting the queue!
+  playTrackDirect(track, false);
+  renderWaveQueue();
+}
+
+function appendWaveQueueItems(newTracks) {
+  const container = document.getElementById('wave-track-list');
+  if (!container || !newTracks || newTracks.length === 0) return;
+
+  const currentCount = container.querySelectorAll('.track-row').length;
+  const fragment = document.createDocumentFragment();
+
+  newTracks.forEach((track, offset) => {
+    const idx = currentCount + offset;
+    const canonicalId = (track.originalId || track.id).replace(/^local_dl_/, '');
+    const isFav = state.favorites.has(canonicalId) || state.favorites.has(track.id);
+    const isDown = state.downloadedTracksMap.has(track.id) || (track.originalId && state.downloadedTracksMap.has(track.originalId)) || track.isDownloaded;
+    const isDownloading = state.downloadingIds.has(track.id);
+
+    const div = document.createElement('div');
+    div.className = 'track-row';
+    div.style.setProperty('--item-idx', idx);
+    div.onclick = () => playWaveTrackAt(idx);
+
+    div.innerHTML = `
+      <!-- Number -->
+      <div style="width:28px; text-align:center; font-size:12px; color:var(--text-tertiary); font-weight:600;">
+        ${idx + 1}
+      </div>
+
+      <!-- Cover Art -->
+      <div class="track-cover-art">
+        ${track.coverUrl 
+          ? `<img src="${track.coverUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&q=80';" />`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3390EC" stroke-width="2">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>`
+        }
+      </div>
+
+      <!-- Title & Artist -->
+      <div style="flex:1; min-width:0;">
+        <p class="track-title" style="font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${escapeHtml(track.title)}
+        </p>
+        <p style="font-size:12px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${escapeHtml(track.artist)}
+        </p>
+      </div>
+
+      <!-- Track Duration -->
+      <span class="track-duration" style="font-size:12px; font-variant-numeric:tabular-nums; color:var(--text-tertiary); min-width:44px; text-align:right;">
+        ${track.durationFormatted || '3:30'}
+      </span>
+
+      <!-- Download Button -->
+      <button onclick="event.stopPropagation(); handleTrackDownload('${track.id}')"
+              title="${isDown ? 'Скачано' : 'Скачать офлайн'}"
+              style="background:transparent; border:none; color:${isDown ? '#22c55e' : 'var(--text-tertiary)'}; cursor:pointer; padding:6px; margin-left:4px;">
+        ${isDownloading
+          ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3390EC" stroke-width="2.5" style="animation:spin 1s linear infinite;">
+               <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+             </svg>`
+          : (isDown
+            ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5">
+                 <path d="M20 6L9 17l-5-5"></path>
+               </svg>`
+            : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                 <polyline points="7 10 12 15 17 10"></polyline>
+                 <line x1="12" y1="15" x2="12" y2="3"></line>
+               </svg>`
+          )
+        }
+      </button>
+
+      <!-- Favorite Heart Button -->
+      <button id="fav-btn-${canonicalId}"
+              class="fav-heart-btn ${isFav ? 'liked' : ''}"
+              onclick="event.stopPropagation(); toggleFavorite('${track.originalId || track.id}')"
+              title="В любимые"
+              style="color:${isFav ? '#FA243C' : 'var(--text-tertiary)'};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? '#FA243C' : 'none'}" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+    `;
+    fragment.appendChild(div);
+  });
+
+  container.appendChild(fragment);
+
+  const countLabel = document.getElementById('wave-queue-sublabel');
+  if (countLabel) {
+    countLabel.textContent = `${state.myWaveQueue.length} похожих треков в очереди`;
+  }
 }
 
 function renderWaveQueue() {
@@ -2454,19 +2798,49 @@ function renderWaveQueue() {
     countLabel.textContent = `${state.myWaveQueue.length} похожих треков в очереди`;
   }
 
-  if (state.myWaveQueue.length === 0) {
+  // Network / server error state
+  if (state.waveError) {
     container.innerHTML = `
-      <div style="text-align:center; padding:30px 10px; color:var(--text-tertiary); font-size:13px;">
-        Очередь волны формируется... Треки подбираются алгоритмом на лету.
+      <div style="text-align:center; padding:36px 16px; color:var(--text-secondary);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="margin:0 auto 12px; display:block;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p style="font-size:14px; font-weight:600; color:#fff; margin-bottom:6px;">Ошибка загрузки рекомендаций</p>
+        <p style="font-size:12.5px; color:var(--text-tertiary); max-width:400px; margin:0 auto 16px;">
+          Не удалось подключиться к SoundCloud или превышен лимит запросов.
+        </p>
+        <button class="btn" onclick="refreshWaveStream()" style="margin:0 auto;">
+          <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-refresh"/></svg>
+          <span>Повторить попытку</span>
+        </button>
       </div>
     `;
     return;
   }
 
-  const tracksToDisplay = state.myWaveQueue.slice(0, 15);
+  // Empty state
+  if (state.myWaveQueue.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:36px 16px; color:var(--text-secondary);">
+        <p style="font-size:14px; font-weight:600; color:#fff; margin-bottom:6px;">Треки не найдены</p>
+        <p style="font-size:12.5px; color:var(--text-tertiary); max-width:400px; margin:0 auto 16px;">
+          Для выбранного режима пока нет подходящих рекомендаций. Попробуйте обновить поток.
+        </p>
+        <button class="btn" onclick="refreshWaveStream()" style="margin:0 auto;">
+          <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-refresh"/></svg>
+          <span>Обновить поток</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const tracksToDisplay = state.myWaveQueue.slice(0, 20);
 
   container.innerHTML = tracksToDisplay.map((track, idx) => {
-    const canonicalId = (track.originalId || track.id).replace('local_dl_', '');
+    const canonicalId = (track.originalId || track.id).replace(/^local_dl_/, '');
     const isFav = state.favorites.has(canonicalId) || state.favorites.has(track.id);
     const isDown = state.downloadedTracksMap.has(track.id) || (track.originalId && state.downloadedTracksMap.has(track.originalId)) || track.isDownloaded;
     const isDownloading = state.downloadingIds.has(track.id);
@@ -2552,14 +2926,15 @@ function renderMyWaveView() {
   };
   requestAnimationFrame(triggerRender);
   setTimeout(triggerRender, 50);
-  // Safe queue persistence: only fetch if queue is currently empty and not already fetching
   if (state.myWaveQueue.length === 0 && !state.isFetchingWaveTracks) {
-    fetchWaveRecommendations(state.myWaveMood, false);
+    fetchWaveRecommendations(state.myWaveMood, false, true);
   }
 }
 
-// Window exports
 window.toggleMyWaveMode = toggleMyWaveMode;
+window.filterAndRankWaveCandidates = filterAndRankWaveCandidates;
+window.fetchWaveRecommendations = fetchWaveRecommendations;
+window.logWaveDebug = logWaveDebug;
 window.toggleMyWavePlayback = toggleMyWavePlayback;
 window.setWaveMood = setWaveMood;
 window.refreshWaveQueue = refreshWaveQueue;
@@ -2597,8 +2972,8 @@ function initVisualizer() {
 // ─────────────────────────────────────────────────────────────
 
 async function toggleMiniPlayerMode(forceState) {
-  if (window.electronAPI && window.electronAPI.toggleMiniPlayer) {
-    const isMini = await window.electronAPI.toggleMiniPlayer(forceState);
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).toggleMiniPlayer) {
+    const isMini = await (window.__testMockAPI || window.electronAPI).toggleMiniPlayer(forceState);
     document.body.classList.toggle('mini-player-mode', isMini);
     updateMiniPlayerUI();
     return isMini;
@@ -2718,8 +3093,8 @@ async function downloadWaveQueueBatch() {
     state.downloadingIds.add(track.id);
     renderWaveQueue();
     try {
-      if (window.electronAPI && window.electronAPI.downloadTrack) {
-        const res = await window.electronAPI.downloadTrack(track);
+      if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).downloadTrack) {
+        const res = await (window.__testMockAPI || window.electronAPI).downloadTrack(track);
         if (res && res.success) savedCount++;
       }
     } catch (err) {
@@ -2763,9 +3138,9 @@ window.updateBarDownloadButtonUI = updateBarDownloadButtonUI;
 // 11. Custom Download Folder Management
 // ─────────────────────────────────────────────────────────────
 async function initDownloadFolderUI() {
-  if (window.electronAPI && window.electronAPI.getDownloadFolder) {
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).getDownloadFolder) {
     try {
-      const folder = await window.electronAPI.getDownloadFolder();
+      const folder = await (window.__testMockAPI || window.electronAPI).getDownloadFolder();
       updateDownloadFolderLabel(folder);
     } catch {}
   }
@@ -2780,9 +3155,9 @@ function updateDownloadFolderLabel(folder) {
 }
 
 async function changeDownloadFolder() {
-  if (window.electronAPI && window.electronAPI.selectDownloadFolder) {
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).selectDownloadFolder) {
     try {
-      const res = await window.electronAPI.selectDownloadFolder();
+      const res = await (window.__testMockAPI || window.electronAPI).selectDownloadFolder();
       if (!res.canceled && res.folder) {
         updateDownloadFolderLabel(res.folder);
         showToast(`Папка загрузок изменена: ${res.folder}`);
@@ -2795,9 +3170,9 @@ async function changeDownloadFolder() {
 }
 
 async function openDownloadFolder() {
-  if (window.electronAPI && window.electronAPI.openDownloadFolder) {
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).openDownloadFolder) {
     try {
-      const res = await window.electronAPI.openDownloadFolder();
+      const res = await (window.__testMockAPI || window.electronAPI).openDownloadFolder();
       if (!res.success && res.error) {
         showToast(res.error);
       }
@@ -2817,30 +3192,30 @@ window.initDownloadFolderUI = initDownloadFolderUI;
 let pendingOtaUpdate = null;
 
 function initOtaUpdater() {
-  if (!window.electronAPI) return;
+  if (!(window.__testMockAPI || window.electronAPI)) return;
 
   // Listen for OTA notifications from main process
-  if (window.electronAPI.onUpdateAvailable) {
-    window.electronAPI.onUpdateAvailable((updateInfo) => {
+  if ((window.__testMockAPI || window.electronAPI).onUpdateAvailable) {
+    (window.__testMockAPI || window.electronAPI).onUpdateAvailable((updateInfo) => {
       showOtaCard(updateInfo);
     });
   }
 
-  if (window.electronAPI.onUpdateProgress) {
-    window.electronAPI.onUpdateProgress((progress) => {
+  if ((window.__testMockAPI || window.electronAPI).onUpdateProgress) {
+    (window.__testMockAPI || window.electronAPI).onUpdateProgress((progress) => {
       updateOtaProgress(progress);
     });
   }
 
-  if (window.electronAPI.onUpdateReady) {
-    window.electronAPI.onUpdateReady(() => {
+  if ((window.__testMockAPI || window.electronAPI).onUpdateReady) {
+    (window.__testMockAPI || window.electronAPI).onUpdateReady(() => {
       showOtaReady();
     });
   }
 
   // Check if an update is already downloaded and pending install
-  if (window.electronAPI.hasPendingUpdate) {
-    window.electronAPI.hasPendingUpdate().then(hasPending => {
+  if ((window.__testMockAPI || window.electronAPI).hasPendingUpdate) {
+    (window.__testMockAPI || window.electronAPI).hasPendingUpdate().then(hasPending => {
       if (hasPending) {
         showOtaReady();
       }
@@ -2937,7 +3312,7 @@ function updateOtaProgress(progress) {
 }
 
 async function startOtaDownload() {
-  if (!window.electronAPI || !window.electronAPI.startUpdateDownload) return;
+  if (!(window.__testMockAPI || window.electronAPI) || !(window.__testMockAPI || window.electronAPI).startUpdateDownload) return;
 
   const actions = document.getElementById('ota-card-actions');
   const progressBox = document.getElementById('ota-card-progress-box');
@@ -2952,7 +3327,7 @@ async function startOtaDownload() {
 
   try {
     const asset = pendingOtaUpdate?.asset || { downloadUrl: pendingOtaUpdate?.htmlUrl };
-    const res = await window.electronAPI.startUpdateDownload(asset);
+    const res = await (window.__testMockAPI || window.electronAPI).startUpdateDownload(asset);
     if (res && res.success) {
       showOtaReady();
       showToast('Обновление загружено');
@@ -2967,8 +3342,8 @@ async function startOtaDownload() {
 }
 
 function installOtaAndRestart() {
-  if (window.electronAPI && window.electronAPI.installUpdateAndRestart) {
-    window.electronAPI.installUpdateAndRestart();
+  if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).installUpdateAndRestart) {
+    (window.__testMockAPI || window.electronAPI).installUpdateAndRestart();
   }
 }
 
@@ -2987,8 +3362,8 @@ async function checkOtaUpdate(manual = false) {
   if (btnText) btnText.textContent = 'Проверка...';
 
   try {
-    if (window.electronAPI && window.electronAPI.checkForUpdates) {
-      const result = await window.electronAPI.checkForUpdates();
+    if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).checkForUpdates) {
+      const result = await (window.__testMockAPI || window.electronAPI).checkForUpdates();
       if (result && result.hasUpdate) {
         showOtaCard(result);
         if (manual) showToast(`Найдено обновление v${result.latestVersion}`);
@@ -3013,7 +3388,7 @@ async function checkOtaUpdate(manual = false) {
 // ─────────────────────────────────────────────────────────────
 // Synced Lyrics Engine (LRCLIB & Karaoke Renderer)
 // ─────────────────────────────────────────────────────────────
-let currentTrackLyrics = []; // [{ time: seconds, text: string }]
+var currentTrackLyrics = []; // [{ time: seconds, text: string }]
 let lyricsSyncInterval = null;
 let currentHighlightedLyricIndex = -1;
 
@@ -3478,8 +3853,8 @@ window.closeSettingsModal = () => toggleSettingsModal(false);
 // ─────────────────────────────────────────────────────────────
 // Windows Media Notification (SMTC UI) & Crossfade Engine
 // ─────────────────────────────────────────────────────────────
-let crossfadeDuration = 0; // seconds (0 = off)
-let smtcHideTimeout = null;
+var crossfadeDuration = 0; // seconds (0 = off)
+var smtcHideTimeout = null;
 
 function changeCrossfade(sec) {
   crossfadeDuration = parseInt(sec, 10);

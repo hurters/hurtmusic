@@ -278,6 +278,9 @@ class LaneOnlineEngine {
           likesCount: t.likes_count || 0,
           isOnline: true,
           source: 'SoundCloud (Без VPN)',
+          createdAt: t.created_at || t.release_date || null,
+          genre: t.genre || '',
+          tagList: t.tag_list || '',
           transcodings: t.media && t.media.transcodings ? t.media.transcodings : []
         });
       }

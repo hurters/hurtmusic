@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchOnline: (query) => ipcRenderer.invoke('online:search', query),
   getOnlineCategory: (category) => ipcRenderer.invoke('online:getCategory', category),
   getOnlineStreamUrl: (trackId) => ipcRenderer.invoke('online:getStreamUrl', trackId),
-  getSimilarTracks: (trackId, artistHint) => ipcRenderer.invoke('online:getSimilarTracks', trackId, artistHint),
+  getSimilarTracks: (trackId, artistHint, limit) => ipcRenderer.invoke('online:getSimilarTracks', trackId, artistHint, limit),
   checkBypass: () => ipcRenderer.invoke('online:checkBypass'),
 
   // Discord Rich Presence
