@@ -137,6 +137,7 @@ const state = {
   playbackQueue: [],
   playbackContext: { name: 'online-search', id: null },
   playbackHistory: [],
+  showRemainingTime: false,
   isPlaying: false,
   isSeeking: false,
   shuffle: false,
@@ -545,8 +546,17 @@ async function handleTrackDownload(trackId) {
 function initAudioEvents() {
   audio.addEventListener('loadedmetadata', () => {
     updateScrubberProgress();
-    document.getElementById('duration-label').textContent = formatTime(audio.duration);
-    document.getElementById('fs-dur-time').textContent = formatTime(audio.duration);
+    const dur = audio.duration;
+    const formattedDur = state.showRemainingTime ? ('-' + formatTime(dur)) : formatTime(dur);
+    const durLabel = document.getElementById('duration-label');
+    if (durLabel) durLabel.textContent = formattedDur;
+    const fsDur = document.getElementById('fs-dur-time');
+    if (fsDur) fsDur.textContent = formattedDur;
+    syncDiscordRPC();
+  });
+
+  audio.addEventListener('seeked', () => {
+    syncDiscordRPC();
   });
 
   audio.addEventListener('timeupdate', () => {
@@ -576,6 +586,10 @@ function initAudioEvents() {
     const playBtn = document.getElementById('btn-play-pause');
     if (playBtn) playBtn.style.opacity = '1';
     setPlaybackState(true);
+  });
+
+  audio.addEventListener('pause', () => {
+    setPlaybackState(false);
   });
 
   audio.addEventListener('error', (e) => {
@@ -765,16 +779,25 @@ async function playTrack(index) {
 window.playTrack = playTrack;
 
 function togglePlayPause() {
-  if (state.currentTrackIndex === -1 && state.filteredTracks.length > 0) {
-    playTrack(0);
+  // If we already have a track loaded/playing or paused, simply toggle play/pause state!
+  if (state.currentPlayingTrack) {
+    if (audio.paused) {
+      setPlaybackState(true);
+      audio.play().catch((err) => {
+        console.warn('Resume play error:', err);
+        setPlaybackState(false);
+      });
+    } else {
+      audio.pause();
+      setPlaybackState(false);
+    }
     return;
   }
 
-  if (audio.paused) {
-    audio.play().then(() => setPlaybackState(true)).catch(() => {});
-  } else {
-    audio.pause();
-    setPlaybackState(false);
+  // If nothing is playing yet, launch from the current list or first track
+  if (state.filteredTracks.length > 0) {
+    playTrack(0);
+    return;
   }
 }
 
@@ -875,6 +898,8 @@ function syncDiscordRPC() {
     artist: track.artist,
     album: state.isMyWaveActive ? 'Моя волна' : (track.album || 'hurtmusic'),
     coverUrl: track.coverUrl || '',
+    permalinkUrl: track.permalinkUrl || null,
+    source: track.source || (track.isOnline ? 'SoundCloud' : 'HurtMusic'),
     isPlaying: state.isPlaying,
     currentTime: audio.currentTime || 0,
     duration: dur
@@ -1063,13 +1088,20 @@ function updateScrubberProgress() {
   const curLabel = document.getElementById('current-time-label');
   if (curLabel) curLabel.textContent = formatTime(audio.currentTime);
   const remaining = Math.max(0, dur - audio.currentTime);
+  const formattedDur = state.showRemainingTime ? ('-' + formatTime(remaining)) : formatTime(dur);
   const durLabel = document.getElementById('duration-label');
-  if (durLabel) durLabel.textContent = '-' + formatTime(remaining);
+  if (durLabel) durLabel.textContent = formattedDur;
   const fsCur = document.getElementById('fs-cur-time') || document.getElementById('fs-curr-time');
   if (fsCur) fsCur.textContent = formatTime(audio.currentTime);
   const fsDur = document.getElementById('fs-dur-time');
-  if (fsDur) fsDur.textContent = '-' + formatTime(remaining);
+  if (fsDur) fsDur.textContent = formattedDur;
 }
+
+function toggleTimeDisplayMode() {
+  state.showRemainingTime = !state.showRemainingTime;
+  updateScrubberProgress();
+}
+window.toggleTimeDisplayMode = toggleTimeDisplayMode;
 
 function initVolume() {
   const volSlider = document.getElementById('volume-slider');
@@ -1418,9 +1450,9 @@ async function switchView(viewName) {
     if (heading) heading.textContent = 'Исполнители';
     if (heroBadge) heroBadge.textContent = 'Артисты';
     if (heroTitle) heroTitle.textContent = 'Исполнители';
-    if (heroSubtitle) heroSubtitle.textContent = 'Каталог музыкантов вашей медиатеки';
-    if (heroArtistName) heroArtistName.textContent = 'Каталог исполнителей';
-    if (searchInput) searchInput.placeholder = 'Поиск по библиотеке';
+    if (heroSubtitle) heroSubtitle.textContent = 'Популярные артисты и музыканты вашей медиатеки';
+    if (heroArtistName) heroArtistName.textContent = 'Каталог артистов';
+    if (searchInput) searchInput.placeholder = 'Поиск артистов на SoundCloud и в библиотеке';
     if (tracksContainer) tracksContainer.style.display = 'none';
     if (artistsGrid) artistsGrid.style.display = 'block';
     if (albumsGrid) albumsGrid.style.display = 'none';
@@ -1453,25 +1485,63 @@ async function switchView(viewName) {
     }
   }
 
-  if (tracksContainer) {
-    tracksContainer.style.animation = 'none';
-    void tracksContainer.offsetWidth;
-    tracksContainer.style.animation = 'iosContentSlideIn 0.35s var(--ios-spring)';
+  // Smooth iOS-spring tab transition animations across all views
+  const activeViewContainer = (viewName === 'artists')
+    ? artistsGrid
+    : (viewName === 'albums')
+      ? albumsGrid
+      : tracksContainer;
+
+  [tracksContainer, artistsGrid, albumsGrid].forEach(el => {
+    if (el && el !== activeViewContainer) {
+      el.classList.remove('tab-transition-in');
+    }
+  });
+
+  if (activeViewContainer) {
+    activeViewContainer.classList.remove('tab-transition-in');
+    void activeViewContainer.offsetWidth; // Trigger reflow for fresh animation
+    activeViewContainer.classList.add('tab-transition-in');
   }
 }
 window.switchView = switchView;
 
-function renderArtistsGrid() {
+const POPULAR_ARTISTS_CATALOG = [
+  { name: 'Kai Angel', genre: 'Opium / Trap', avatar: 'https://images.genius.com/0ad5dcfca582855909893d5f9d1469e7.1000x1000x1.jpg' },
+  { name: 'Viperr', genre: 'Opium / Rage', avatar: 'https://images.genius.com/b95d070b4cce8f01b44b20ce4b706f9d.1000x1000x1.jpg' },
+  { name: 'Toxis', genre: 'Hip-Hop / New Wave', avatar: 'https://images.genius.com/129758784fc1b09bce0550426b3f946e.1000x1000x1.jpg' },
+  { name: 'Friendly Thug 52 NGG', genre: 'Underground Hip-Hop', avatar: 'https://images.genius.com/39352e82500d02ea2aa1c29656a8d813.1000x1000x1.jpg' },
+  { name: 'Big Baby Tape', genre: 'Trap / Phonk', avatar: 'https://images.genius.com/56ae99583c7ce422112461be6520b72c.1000x1000x1.jpg' },
+  { name: 'Heronwater', genre: 'Russian Trap', avatar: 'https://images.genius.com/034b7201c10714777dd0c76cbdf8c516.1000x1000x1.jpg' },
+  { name: 'Scally Milano', genre: 'Trap / Scammed', avatar: 'https://images.genius.com/bfe7641d6365b20677aa682e0bf646ec.1000x1000x1.jpg' },
+  { name: 'Bushido Zho', genre: 'Hip-Hop / Drill', avatar: 'https://images.genius.com/791c855aa8b6aa50085ba46a06a20d6f.1000x1000x1.jpg' },
+  { name: 'OG Buda', genre: 'Trap / Drill', avatar: 'https://images.genius.com/d9d20c578ae1b0fc21fc20b3310ce6b0.1000x1000x1.jpg' },
+  { name: 'Macan', genre: 'Pop Rap / Street', avatar: 'https://images.genius.com/974b88231c51d6c0ea6d2e67dfb6a715.1000x1000x1.jpg' },
+  { name: 'Kordhell', genre: 'Phonk / Drift', avatar: 'https://images.genius.com/bcf5fa4964be87d8d2ee3782b6be0f09.1000x1000x1.jpg' },
+  { name: 'DVRST', genre: 'Phonk / Electronic', avatar: 'https://images.genius.com/faaa671aa5a3ba0fe2bf57aeec75f532.1000x1000x1.jpg' },
+  { name: 'Shadowraze', genre: 'Witch House / Phonk', avatar: 'https://images.genius.com/6249fa6e5b4adce72fdfbb7d8c07e0ff.1000x1000x1.jpg' },
+  { name: 'zxcursed', genre: 'Phonk / Breakcore', avatar: 'https://images.genius.com/131f4a9b6c1bf8d8d3f66c07eb2ad693.1000x1000x1.jpg' },
+  { name: 'Summer of Haze', genre: 'Witch House / Dark Ambient', avatar: 'https://images.genius.com/0cbdd6f9f6e61f22497ae979fb696321.1000x1000x1.jpg' },
+  { name: 'IC3PEAK', genre: 'Electro / Witch House', avatar: 'https://images.genius.com/5c9b6345ec42cbf1fba10f3cfa5e27a6.1000x1000x1.jpg' },
+  { name: 'Kizaru', genre: 'Hip-Hop / Trap', avatar: 'https://images.genius.com/a42b12cf53cba36b801a61eb4c2f6d22.1000x1000x1.jpg' },
+  { name: 'Saluki', genre: 'Experimental Hip-Hop', avatar: 'https://images.genius.com/d94eeae4ce586cb5db7ea327916124f5.1000x1000x1.jpg' },
+  { name: 'Mayot', genre: 'Trap / R&B', avatar: 'https://images.genius.com/e5be6fc4a10f769c362da5307b223c7c.1000x1000x1.jpg' },
+  { name: '163ONMYNECK', genre: 'Trap / Rap', avatar: 'https://images.genius.com/adfbefeaee136df561fb5e41aa2d3269.1000x1000x1.jpg' }
+];
+
+async function renderArtistsGrid() {
   const grid = document.getElementById('artists-grid');
   const empty = document.getElementById('artists-empty-state');
   const stats = document.getElementById('artists-stats-label');
   if (!grid) return;
 
-  const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
+  // 1. Gather all library tracks (downloaded & favorites first)
+  const libTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values())];
   const artistMap = new Map();
 
-  for (const t of allTracks) {
-    const artist = (t.artist || 'Неизвестный исполнитель').trim();
+  for (const t of libTracks) {
+    const artist = (t.artist || '').trim();
+    if (!artist || artist === 'Неизвестный исполнитель' || artist === 'Unknown Artist') continue;
     if (!artistMap.has(artist)) {
       artistMap.set(artist, {
         name: artist,
@@ -1488,18 +1558,76 @@ function renderArtistsGrid() {
     }
   }
 
+  // 2. Build list: if user has artists in library, show them sorted by track count;
+  // then complement with curated popular artists catalog!
   let artists = Array.from(artistMap.values());
-  if (state.searchQuery) {
-    const q = state.searchQuery.toLowerCase();
-    artists = artists.filter(a => a.name.toLowerCase().includes(q));
-  }
   artists.sort((a, b) => b.tracks.length - a.tracks.length || a.name.localeCompare(b.name));
+
+  // Add popular artists that aren't already represented
+  for (const pop of POPULAR_ARTISTS_CATALOG) {
+    const existing = artists.find(a => a.name.toLowerCase() === pop.name.toLowerCase());
+    if (!existing) {
+      artists.push({
+        name: pop.name,
+        avatar: pop.avatar,
+        genre: pop.genre,
+        isPopular: true,
+        tracks: []
+      });
+    }
+  }
+
+  // 3. Search query filter
+  const query = (state.searchQuery || '').trim().toLowerCase();
+  if (query) {
+    artists = artists.filter(a =>
+      a.name.toLowerCase().includes(query) ||
+      (a.genre && a.genre.toLowerCase().includes(query))
+    );
+
+    // If query didn't match local or popular catalog, dynamically search SoundCloud for this artist!
+    if (artists.length === 0) {
+      if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+        if (stats) stats.textContent = 'Ищем артиста онлайн...';
+        try {
+          const onlineRes = await (window.__testMockAPI || window.electronAPI).searchOnline(state.searchQuery);
+          if (onlineRes && onlineRes.length > 0) {
+            // Group online tracks by artist
+            const onlineArtistMap = new Map();
+            for (const ot of onlineRes) {
+              const otArt = (ot.artist || '').trim();
+              if (!otArt) continue;
+              if (!onlineArtistMap.has(otArt)) {
+                onlineArtistMap.set(otArt, {
+                  name: otArt,
+                  avatar: ot.coverUrl || '',
+                  tracks: []
+                });
+              }
+              onlineArtistMap.get(otArt).tracks.push(ot);
+            }
+            artists = Array.from(onlineArtistMap.values());
+            // Cache found tracks into state.onlineTracks so clicking immediately shows them
+            state.onlineTracks = onlineRes;
+          }
+        } catch (err) {
+          console.warn('[Artists Search Online Error]', err);
+        }
+      }
+    }
+  }
 
   if (stats) stats.textContent = formatPlural(artists.length, 'исполнитель', 'исполнителя', 'исполнителей');
 
   if (artists.length === 0) {
     grid.innerHTML = '';
-    if (empty) empty.style.display = 'block';
+    if (empty) {
+      empty.style.display = 'block';
+      const emptyTitle = empty.querySelector('.empty-title');
+      const emptyDesc = empty.querySelector('.empty-desc');
+      if (emptyTitle) emptyTitle.textContent = query ? `Исполнитель «${escapeHtml(state.searchQuery)}» не найден` : 'Исполнители не найдены';
+      if (emptyDesc) emptyDesc.textContent = query ? 'Попробуйте ввести другое имя исполнителя или проверить правильность написания' : 'Сохраняйте или скачивайте треки, чтобы сформировать каталог артистов.';
+    }
     return;
   }
 
@@ -1507,7 +1635,10 @@ function renderArtistsGrid() {
 
   grid.innerHTML = artists.map((a, i) => {
     const initials = a.name.slice(0, 2).toUpperCase();
-    const countStr = formatPlural(a.tracks.length, 'трек', 'трека', 'треков');
+    const countStr = a.tracks.length > 0 
+      ? formatPlural(a.tracks.length, 'трек', 'трека', 'треков')
+      : (a.genre || 'Популярный артист');
+
     return `
       <div class="artist-card" onclick="openArtistDetail('${escapeHtml(a.name)}')">
         ${a.avatar 
@@ -1522,9 +1653,9 @@ function renderArtistsGrid() {
 }
 window.renderArtistsGrid = renderArtistsGrid;
 
-function openArtistDetail(artistName) {
+async function openArtistDetail(artistName) {
   const allTracks = [...state.downloadedTracks, ...Array.from(state.favorites.values()), ...state.onlineTracks];
-  const tracks = allTracks.filter(t => (t.artist || '').trim().toLowerCase() === artistName.trim().toLowerCase());
+  let tracks = allTracks.filter(t => (t.artist || '').trim().toLowerCase() === artistName.trim().toLowerCase());
   const seen = new Set();
   const uniqueTracks = [];
   for (const t of tracks) {
@@ -1532,6 +1663,24 @@ function openArtistDetail(artistName) {
     if (!seen.has(can)) {
       seen.add(can);
       uniqueTracks.push(t);
+    }
+  }
+
+  // If artist has few or 0 tracks in memory, fetch their tracks online!
+  if (uniqueTracks.length < 3 && (window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+    try {
+      const fetched = await (window.__testMockAPI || window.electronAPI).searchOnline(artistName);
+      if (fetched && fetched.length > 0) {
+        for (const ft of fetched) {
+          const can = getTrackCanonicalId(ft);
+          if (!seen.has(can)) {
+            seen.add(can);
+            uniqueTracks.push(ft);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[openArtistDetail Online Error]', e);
     }
   }
 
@@ -1799,7 +1948,10 @@ function handleSearch(query) {
   }
 
   if (state.currentView === 'artists') {
-    renderArtistsGrid();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      renderArtistsGrid();
+    }, 250);
     return;
   }
   if (state.currentView === 'albums') {
@@ -2021,7 +2173,7 @@ function updateFavoriteButtonUI(trackId) {
   }
 
   // Update Mini-Player HUD Heart
-  const hudHeart = document.getElementById('hud-icon-heart');
+  const hudHeart = document.getElementById('hud-heart-icon') || document.getElementById('hud-icon-heart');
   if (hudHeart) {
     hudHeart.style.color = isFav ? '#FA243C' : 'currentColor';
     hudHeart.setAttribute('fill', isFav ? '#FA243C' : 'none');
@@ -3009,7 +3161,7 @@ function updateMiniPlayerUI() {
   const hudDisc = document.getElementById('hud-vinyl-disc');
   const hudPlay = document.getElementById('hud-icon-play');
   const hudPause = document.getElementById('hud-icon-pause');
-  const hudHeart = document.getElementById('hud-icon-heart');
+  const hudHeart = document.getElementById('hud-heart-icon') || document.getElementById('hud-icon-heart');
 
   if (track) {
     if (hudTitle) hudTitle.textContent = track.title || 'Not Playing';
@@ -3561,6 +3713,7 @@ function toggleLyricsModal(force) {
   }
 }
 window.toggleLyricsModal = toggleLyricsModal;
+window.toggleLyricsDrawer = toggleLyricsModal;
 
 
 // ─────────────────────────────────────────────────────────────
@@ -3670,7 +3823,7 @@ function applyAllEqGains() {
   });
 }
 
-function setEqFilterGain(index, val) {
+function setEqFilterGain(index, val, updateDOM = true) {
   val = Math.max(-12, Math.min(12, Math.round(parseFloat(val) * 2) / 2));
   eqState.gains[index] = val;
   eqState.preset = 'custom';
@@ -3686,7 +3839,9 @@ function setEqFilterGain(index, val) {
 
   updateEqPresetButtons();
   saveEqState();
-  renderInteractiveEq();
+  if (updateDOM) {
+    renderInteractiveEq();
+  }
 }
 window.setEqFilterGain = setEqFilterGain;
 
@@ -3805,21 +3960,74 @@ function renderInteractiveEq() {
   container.querySelectorAll('.eq-band-column').forEach(col => {
     const idx = parseInt(col.dataset.bandIdx, 10);
     const groove = col.querySelector('.eq-track-groove');
+    const fillBar = col.querySelector('.eq-fill-bar');
+    const thumb = col.querySelector('.eq-thumb-handle');
+    const gainTag = col.querySelector('.eq-gain-tag');
 
-    // Dragging
-    const handleMove = (e) => {
+    const updateColumnVisual = (gain) => {
+      const yPct = 50 - (gain / 12) * 42;
+      let fTop, fHeight;
+      if (gain >= 0) {
+        fTop = yPct;
+        fHeight = 50 - yPct;
+      } else {
+        fTop = 50;
+        fHeight = yPct - 50;
+      }
+      if (fillBar) {
+        fillBar.style.top = `${fTop}%`;
+        fillBar.style.height = `${fHeight}%`;
+      }
+      if (thumb) {
+        thumb.style.top = `${yPct}%`;
+      }
+      if (gainTag) {
+        const sign = gain > 0 ? '+' : '';
+        gainTag.textContent = `${sign}${gain.toFixed(gain % 1 !== 0 ? 1 : 0)}dB`;
+      }
+
+      // Also update curve
+      if (curvePath) {
+        const curPoints = [];
+        for (let i = 0; i < eqBandsCount; i++) {
+          const g = eqState.enabled ? (eqState.gains[i] || 0) : 0;
+          const px = ((i + 0.5) / eqBandsCount) * 100;
+          const py = 50 - (g / 12) * 42;
+          curPoints.push({ x: px, y: py });
+        }
+        let d = `M 0 ${curPoints[0].y} L ${curPoints[0].x} ${curPoints[0].y}`;
+        for (let i = 0; i < curPoints.length - 1; i++) {
+          const p0 = curPoints[i];
+          const p1 = curPoints[i + 1];
+          const mx = (p0.x + p1.x) / 2;
+          d += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
+        }
+        d += ` L 100 ${curPoints[curPoints.length - 1].y}`;
+        curvePath.setAttribute('d', d);
+      }
+    };
+
+    const handleMove = (e, isFinal = false) => {
       const rect = groove.getBoundingClientRect();
       const clientY = e.clientY || (e.touches && e.touches[0].clientY);
       const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
       // ratio: 0 is top (+12dB), 1 is bottom (-12dB)
       const rawGain = 12 - (ratio * 24);
-      setEqFilterGain(idx, rawGain);
+      const roundedGain = Math.max(-12, Math.min(12, Math.round(rawGain * 2) / 2));
+
+      setEqFilterGain(idx, roundedGain, isFinal);
+      updateColumnVisual(roundedGain);
     };
 
     col.addEventListener('mousedown', (e) => {
-      handleMove(e);
-      const onMouseMove = (moveEvt) => handleMove(moveEvt);
-      const onMouseUp = () => {
+      e.preventDefault();
+      handleMove(e, false);
+      const onMouseMove = (moveEvt) => {
+        moveEvt.preventDefault();
+        handleMove(moveEvt, false);
+      };
+      const onMouseUp = (upEvt) => {
+        handleMove(upEvt, true);
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseup', onMouseUp);
       };
@@ -3832,12 +4040,13 @@ function renderInteractiveEq() {
       e.preventDefault();
       const step = e.deltaY < 0 ? 0.5 : -0.5;
       const current = eqState.gains[idx] || 0;
-      setEqFilterGain(idx, current + step);
+      setEqFilterGain(idx, current + step, true);
     }, { passive: false });
 
     // Double-click to reset band to 0 dB
-    col.addEventListener('dblclick', () => {
-      setEqFilterGain(idx, 0);
+    col.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      setEqFilterGain(idx, 0, true);
     });
   });
 

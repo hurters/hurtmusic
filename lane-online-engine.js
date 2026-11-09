@@ -272,6 +272,7 @@ class LaneOnlineEngine {
           artist: (t.user && t.user.username) ? t.user.username : 'Unknown Artist',
           album: 'SoundCloud Online',
           coverUrl: cover,
+          permalinkUrl: t.permalink_url || null,
           duration: durationSec,
           durationFormatted: durationFormatted,
           playbackCount: t.playback_count || 0,

@@ -90,8 +90,11 @@ npm test
 # Запуск в режиме разработки
 npm start
 
-# Упаковка обновлений в app.asar
-node repack.js
+# Сборка дистрибутива
+npm run build
+
+# Создание релизного zip-архива
+npm run pack:zip
 ```
 
 ---

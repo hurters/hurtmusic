@@ -337,20 +337,22 @@ function toggleMiniPlayer(forceState) {
   if (isMiniPlayerActive) {
     savedBoundsBeforeMini = mainWindow.getBounds();
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
-    mainWindow.setMinimumSize(320, 84);
+    mainWindow.setMinimumSize(360, 96);
+    mainWindow.setResizable(false);
 
     const primaryDisplay = screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea;
 
-    // Place at bottom-right corner of screen (convenient HUD for gamers)
-    const miniW = 340;
-    const miniH = 84;
+    // Premium Floating Desktop HUD: 380x96px at bottom-right corner of screen
+    const miniW = 380;
+    const miniH = 96;
     const miniX = workArea.x + workArea.width - miniW - 24;
     const miniY = workArea.y + workArea.height - miniH - 24;
 
     mainWindow.setBounds({ x: miniX, y: miniY, width: miniW, height: miniH });
   } else {
     mainWindow.setAlwaysOnTop(false);
+    mainWindow.setResizable(true);
     mainWindow.setMinimumSize(860, 560);
 
     if (savedBoundsBeforeMini) {

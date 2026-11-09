@@ -579,7 +579,7 @@
         <span class="time-label" id="current-time-label">0:00</span>
         <input type="range" class="progress-slider" id="progress-slider" min="0" max="100" value="0" step="0.1"
                oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)" aria-label="Прогресс воспроизведения">
-        <span class="time-label" id="duration-label">-0:00</span>
+        <span class="time-label" id="duration-label" onclick="toggleTimeDisplayMode()" title="Переключить формат времени">0:00</span>
       </div>
     </div>
 
@@ -636,7 +636,7 @@
         <span class="time-label" id="fs-cur-time">0:00</span>
         <input type="range" class="progress-slider" id="fs-progress" min="0" max="100" value="0" step="0.1"
                oninput="onScrubInput(this.value)" onchange="onScrubChange(this.value)" aria-label="Прогресс">
-        <span class="time-label" id="fs-dur-time">-0:00</span>
+        <span class="time-label" id="fs-dur-time" onclick="toggleTimeDisplayMode()" title="Переключить формат времени">0:00</span>
       </div>
 
       <!-- Controls with Shuffle, Prev, Play/Pause, Next, Repeat -->
@@ -657,38 +657,41 @@
         <button class="icon-btn" id="fs-btn-repeat" onclick="toggleRepeat()" title="Повтор" aria-label="Повтор">
           <svg width="20" height="20"><use href="#icon-repeat"/></svg>
         </button>
+        <button class="icon-btn" id="fs-btn-lyrics" onclick="toggleLyricsDrawer()" title="Текст песни (Слова)" aria-label="Текст песни" style="margin-left: 8px;">
+          <svg width="20" height="20"><use href="#icon-lyrics"/></svg>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- ── Mini-Player HUD ── -->
+  <!-- ── Mini-Player HUD (Spotify / macOS Dynamic Island Style) ── -->
   <div id="mini-player-hud" style="display:none;">
-    <div class="hud-content">
-      <div class="hud-cover">
-        <img id="hud-cover-img" src="" alt="" style="display:none;" />
-        <div id="hud-cover-placeholder">
-          <svg width="18" height="18" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
-        </div>
+    <div class="hud-cover hud-no-drag" onclick="toggleMiniPlayerMode(false)" title="Развернуть в полный плеер">
+      <img id="hud-cover-img" src="" alt="" style="display:none;" />
+      <div id="hud-cover-placeholder">
+        <svg width="22" height="22" style="color:var(--text-tertiary);"><use href="#icon-album"/></svg>
       </div>
-      <div class="hud-meta">
-        <p id="hud-title">hurtmusic</p>
-        <p id="hud-artist">Мини-плеер</p>
-      </div>
-      <button id="hud-fav-btn" class="wave-action-btn hud-no-drag" onclick="toggleCurrentTrackFavorite()" title="В любимые">
-        <svg id="hud-heart-icon" width="13" height="13"><use href="#icon-heart"/></svg>
+    </div>
+    <div class="hud-meta">
+      <p id="hud-title">hurtmusic</p>
+      <p id="hud-artist">Мини-плеер</p>
+    </div>
+    <div class="hud-controls hud-no-drag">
+      <button id="hud-fav-btn" class="hud-btn" onclick="toggleCurrentTrackFavorite()" title="В любимые">
+        <svg id="hud-heart-icon" width="15" height="15"><use href="#icon-heart"/></svg>
       </button>
-      <button class="wave-action-btn hud-no-drag" onclick="playPrevious()" title="Назад" aria-label="Назад">
-        <svg width="13" height="13"><use href="#icon-prev"/></svg>
+      <button class="hud-btn" onclick="playPrevious()" title="Назад" aria-label="Назад">
+        <svg width="15" height="15"><use href="#icon-prev"/></svg>
       </button>
-      <button id="hud-play-btn" class="play-toggle-btn hud-no-drag" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
-        <svg id="hud-icon-play" width="13" height="13"><use href="#icon-play"/></svg>
-        <svg id="hud-icon-pause" style="display:none;" width="13" height="13"><use href="#icon-pause"/></svg>
+      <button id="hud-play-btn" class="hud-play-btn" onclick="togglePlayPause()" title="Играть / Пауза" aria-label="Играть / Пауза">
+        <svg id="hud-icon-play" width="16" height="16"><use href="#icon-play"/></svg>
+        <svg id="hud-icon-pause" style="display:none;" width="16" height="16"><use href="#icon-pause"/></svg>
       </button>
-      <button class="wave-action-btn hud-no-drag" onclick="playNext()" title="Вперёд" aria-label="Вперёд">
-        <svg width="13" height="13"><use href="#icon-next"/></svg>
+      <button class="hud-btn" onclick="playNext()" title="Вперёд" aria-label="Вперёд">
+        <svg width="15" height="15"><use href="#icon-next"/></svg>
       </button>
-      <button class="wave-action-btn hud-no-drag" onclick="toggleMiniPlayerMode(false)" title="Развернуть" aria-label="Развернуть">
-        <svg width="13" height="13"><use href="#icon-maximize"/></svg>
+      <button class="hud-btn hud-expand-btn" onclick="toggleMiniPlayerMode(false)" title="Развернуть (Esc)" aria-label="Развернуть">
+        <svg width="15" height="15"><use href="#icon-maximize"/></svg>
       </button>
     </div>
   </div>
@@ -698,15 +701,15 @@
     <div class="lyrics-panel">
       <div class="lyrics-head">
         <div>
-          <h2>Слова трека</h2>
+          <h2 id="lyrics-track-title">Слова трека</h2>
           <p id="lyrics-track-artist">Синхронизированный текст LRCLIB</p>
         </div>
-        <button class="icon-btn" onclick="toggleLyricsDrawer(false)" aria-label="Закрыть текст">
+        <button class="icon-btn lyrics-close" onclick="toggleLyricsDrawer(false)" aria-label="Закрыть текст">
           <svg width="18" height="18"><use href="#icon-close"/></svg>
         </button>
       </div>
-      <div id="lyrics-container">
-        <p class="lyrics-line" style="color:var(--text-tertiary); text-align:center; padding: 40px 0;">Загрузка текста песни...</p>
+      <div id="lyrics-lines-container">
+        <p class="lyrics-placeholder">Загрузка текста песни...</p>
       </div>
     </div>
   </div>

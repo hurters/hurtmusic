@@ -726,6 +726,21 @@ svg {
 .ios-eq-bar.bar-3 { height: 8px; animation-delay: 0.2s; }
 @keyframes eqPulse { 0% { height: 3px; } 100% { height: 14px; } }
 
+@keyframes iosContentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tab-transition-in {
+  animation: iosContentSlideIn 0.32s var(--ios-spring) both !important;
+}
+
 @keyframes iosListItemIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -981,7 +996,15 @@ svg {
   color: var(--text-tertiary);
 }
 #current-time-label, #fs-cur-time { text-align: right; }
-#duration-label, #fs-dur-time { text-align: left; }
+#duration-label, #fs-dur-time {
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+#duration-label:hover, #fs-dur-time:hover {
+  color: var(--text-primary);
+}
 
 #bar-right {
   display: flex;
@@ -1076,39 +1099,152 @@ input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.25); backgr
 .spinning-disc.playing { animation-play-state: running; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- Mini-player HUD ---------- */
+/* ---------- Mini-player HUD (Spotify / macOS Dynamic Island Style) ---------- */
 #mini-player-hud {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 999999;
   display: none;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px;
+  padding: 0 16px;
+  box-sizing: border-box;
   overflow: hidden;
-  background: var(--bg-app);
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  background: rgba(14, 14, 16, 0.96);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   -webkit-app-region: drag;
 }
-body.mini-player-mode { display: block; }
+
+body.mini-player-mode {
+  display: block;
+  background: transparent !important;
+}
 body.mini-player-mode #titlebar,
 body.mini-player-mode #app-container,
 body.mini-player-mode #player-bar,
 body.mini-player-mode #ambient-backdrop,
-body.mini-player-mode #fs-overlay { display: none !important; }
-body.mini-player-mode #mini-player-hud { display: flex !important; }
+body.mini-player-mode #fs-overlay,
+body.mini-player-mode #lyrics-drawer-overlay,
+body.mini-player-mode #settings-modal-overlay {
+  display: none !important;
+}
+body.mini-player-mode #mini-player-hud {
+  display: flex !important;
+}
 
-.hud-cover { display: flex; align-items: center; flex-shrink: 0; }
-.hud-meta { flex: 1; min-width: 0; }
-#hud-title,
-#hud-artist { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#hud-title { font-size: 12px; font-weight: 500; }
-#hud-artist { margin-top: 2px; font-size: 10.5px; color: var(--text-secondary); }
-.hud-controls { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-.hud-controls .wave-action-btn { width: 28px; height: 28px; }
-.hud-controls .play-toggle-btn { width: 30px; height: 30px; }
+.hud-cover {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.2s var(--ease);
+}
+.hud-cover:hover {
+  transform: scale(1.04);
+}
+#hud-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+#hud-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.hud-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4px;
+}
+#hud-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+#hud-artist {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: scale(1.06);
+}
+.hud-btn:active {
+  transform: scale(0.94);
+}
+.hud-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.35);
+  transition: all 0.15s var(--ease);
+}
+.hud-play-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.5);
+}
+.hud-play-btn:active {
+  transform: scale(0.94);
+}
 
 /* ---------- Overlays: OTA, toasts, SMTC, lyrics, settings ---------- */
 #ota-modal-card {

@@ -121,6 +121,8 @@ class DiscordRpcManager {
   async setIdle() {
     this.currentActivity = null;
     await this.setActivity({
+      name: 'HurtMusic',
+      type: 2, // ActivityType.Listening
       details: 'В медиатеке',
       state: 'Выбирает трек',
       largeImageKey: this.appIconUrl || 'logo',
@@ -134,16 +136,16 @@ class DiscordRpcManager {
 
   /**
    * Update live playback presence
-   * @param {Object} data - { title, artist, album, coverUrl, isPlaying, currentTime, duration }
+   * @param {Object} data - { title, artist, album, coverUrl, permalinkUrl, isPlaying, currentTime, duration }
    */
   async updatePlayback(data) {
     if (!data || !data.title) {
       return this.setIdle();
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const curTime = Math.max(0, Math.floor(data.currentTime || 0));
-    const duration = Math.max(0, Math.floor(data.duration || 0));
+    const nowMs = Date.now();
+    const curTimeMs = Math.max(0, Math.round((data.currentTime || 0) * 1000));
+    const durationMs = Math.max(0, Math.round((data.duration || 0) * 1000));
 
     const cover = (data.coverUrl && data.coverUrl.startsWith('http'))
       ? data.coverUrl
@@ -151,23 +153,30 @@ class DiscordRpcManager {
 
     const albumTag = data.album ? `${data.album} · Hi-Fi Lossless` : 'HurtMusic · Studio Hi-Fi';
 
+    const buttons = [];
+    if (data.permalinkUrl && typeof data.permalinkUrl === 'string' && data.permalinkUrl.startsWith('http')) {
+      buttons.push({ label: 'Слушать на SoundCloud', url: data.permalinkUrl });
+    } else {
+      buttons.push({ label: 'Слушать в HurtMusic', url: 'https://t.me/hurtmusics' });
+    }
+    buttons.push({ label: 'Канал HurtMusic', url: 'https://t.me/hurtmusics' });
+
     const activity = {
+      name: 'HurtMusic',
+      type: 2, // ActivityType.Listening -> renders "Слушает HurtMusic" + live timeline bar (01:54 ─────── 01:56)
       details: (data.title || 'Трек').slice(0, 128),
       state: (data.artist || 'HurtMusic').slice(0, 128),
       largeImageKey: cover,
       largeImageText: albumTag.slice(0, 128),
-      buttons: [
-        { label: 'Слушать в HurtMusic', url: 'https://t.me/hurtmusics' },
-        { label: 'Скачать плеер', url: 'https://t.me/hurtmusics' }
-      ]
+      buttons: buttons.slice(0, 2)
     };
 
-    if (data.isPlaying) {
-      // Live progress bar in Discord
-      activity.startTimestamp = now - curTime;
-      if (duration > 0 && duration >= curTime) {
-        activity.endTimestamp = now + (duration - curTime);
-      }
+    if (data.isPlaying && durationMs > 0) {
+      // Live progress bar in Discord: startTimestamp and endTimestamp in milliseconds
+      activity.startTimestamp = nowMs - curTimeMs;
+      activity.endTimestamp = activity.startTimestamp + durationMs;
+    } else if (data.isPlaying) {
+      activity.startTimestamp = nowMs - curTimeMs;
     } else {
       activity.state = `${(data.artist || 'HurtMusic')} · Пауза`.slice(0, 128);
     }
