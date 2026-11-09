@@ -168,6 +168,7 @@ window.state = state;
 
 // ── HTML5 Audio Player & HLS Streamer ──
 const audio = new Audio();
+window.audio = audio;
 audio.volume = state.isMuted ? 0 : state.volume;
 let hlsInstance = null;
 
@@ -1075,14 +1076,21 @@ function initVolume() {
   const activeVol = state.isMuted ? 0 : state.volume;
   if (volSlider) {
     volSlider.value = activeVol;
+    volSlider.addEventListener('input', (e) => {
+      setVolume(e.target.value);
+    });
+    volSlider.addEventListener('change', (e) => {
+      setVolume(e.target.value);
+    });
     updateSliderStyle('volume-slider', activeVol * 100);
   }
   updateMuteIcon();
 }
 
 function setVolume(val) {
-  state.volume = parseFloat(val);
-  state.isMuted = (state.volume === 0);
+  const num = Math.max(0, Math.min(1, parseFloat(val) || 0));
+  state.volume = num;
+  state.isMuted = (num === 0);
   audio.volume = state.isMuted ? 0 : state.volume;
 
   try {
@@ -1090,7 +1098,11 @@ function setVolume(val) {
     localStorage.setItem('hurt_muted', String(state.isMuted));
   } catch (e) {}
 
-  updateSliderStyle('volume-slider', state.volume * 100);
+  const volSlider = document.getElementById('volume-slider');
+  if (volSlider && Math.abs(parseFloat(volSlider.value) - (state.isMuted ? 0 : state.volume)) > 0.01) {
+    volSlider.value = state.isMuted ? 0 : state.volume;
+  }
+  updateSliderStyle('volume-slider', (state.isMuted ? 0 : state.volume) * 100);
   updateMuteIcon();
 }
 
@@ -1106,20 +1118,20 @@ function toggleMute() {
     if (volSlider) volSlider.value = 0;
     updateSliderStyle('volume-slider', 0);
   } else {
-    audio.volume = state.volume > 0 ? state.volume : 0.8;
-    if (volSlider) volSlider.value = audio.volume;
-    updateSliderStyle('volume-slider', audio.volume * 100);
+    if (state.volume <= 0.05) state.volume = 0.8;
+    audio.volume = state.volume;
+    if (volSlider) volSlider.value = state.volume;
+    updateSliderStyle('volume-slider', state.volume * 100);
   }
   updateMuteIcon();
 }
 
 function updateMuteIcon() {
-  const iconHigh = document.getElementById('icon-vol-high');
-  const iconMute = document.getElementById('icon-vol-mute');
-  if (iconHigh && iconMute) {
-    iconHigh.style.display = state.isMuted ? 'none' : 'block';
-    iconMute.style.display = state.isMuted ? 'block' : 'none';
-  }
+  const iconHigh = document.getElementById('vol-icon-high') || document.getElementById('icon-vol-high');
+  const iconMute = document.getElementById('vol-icon-mute') || document.getElementById('icon-vol-mute');
+  const isSilent = state.isMuted || state.volume === 0;
+  if (iconHigh) iconHigh.style.display = isSilent ? 'none' : 'block';
+  if (iconMute) iconMute.style.display = isSilent ? 'block' : 'none';
 }
 
 function updateSliderStyle(id, pct) {
@@ -2931,6 +2943,9 @@ function renderMyWaveView() {
   }
 }
 
+window.setVolume = setVolume;
+window.toggleMute = toggleMute;
+window.initVolume = initVolume;
 window.toggleMyWaveMode = toggleMyWaveMode;
 window.filterAndRankWaveCandidates = filterAndRankWaveCandidates;
 window.fetchWaveRecommendations = fetchWaveRecommendations;
