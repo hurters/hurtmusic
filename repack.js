@@ -45,6 +45,7 @@ const filesToCopy = [
   'path-security.js',
   'preload.js',
   'renderer.js',
+  'styles.css',
   'tray-icon.png'
 ];
 
