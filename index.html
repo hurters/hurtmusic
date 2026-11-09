@@ -463,7 +463,8 @@
 
       <!-- My Wave (Моя волна) View -->
       <div id="my-wave-view" style="display:none;">
-        <div class="wave-stage">
+        <div class="wave-layout-container">
+          <!-- 1. Mode chips (position: relative; z-index: 3;) -->
           <div class="wave-chips-bar" id="wave-mood-chips">
             <button class="wave-chip active" id="chip-mode-similar" onclick="setWaveMood('similar')">
               <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-sliders"/></svg>
@@ -487,53 +488,52 @@
             </button>
           </div>
 
-          <div class="wave-center-zone">
-            <div class="yandex-fluid-container" id="wave-sphere-orb" onclick="toggleMyWavePlayback()">
-              <div class="yandex-ambient-aura" id="yandex-wave-aura"></div>
-              <div class="yandex-fluid-sphere" id="yandex-fluid-blob">
-                <canvas id="wave-orb-canvas" class="wave-canvas-overlay" width="300" height="300"></canvas>
-                <div class="wave-sphere-center-content">
-                  <div class="wave-orb-play-icon-wrap">
-                    <svg id="wave-orb-icon-play" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                    <svg id="wave-orb-icon-pause" style="display:none;" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
-                  </div>
-                  <span class="wave-sphere-title">Моя волна</span>
-                  <button class="wave-tune-btn" onclick="event.stopPropagation(); openWaveSettings();">
-                    <svg width="12" height="12" style="margin-right:4px;"><use href="#icon-sliders"/></svg>
-                    <span>Настроить</span>
-                  </button>
+          <!-- 2. Sphere (290x290px), click handled strictly on blob -->
+          <div class="wave-sphere-wrapper" id="wave-sphere-orb">
+            <div class="yandex-ambient-aura" id="yandex-wave-aura"></div>
+            <div class="yandex-fluid-sphere" id="yandex-fluid-blob" onclick="toggleMyWavePlayback()">
+              <div class="wave-sphere-center-content" id="wave-sphere-center-content">
+                <div class="wave-orb-play-icon-wrap">
+                  <svg id="wave-orb-icon-play" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  <svg id="wave-orb-icon-pause" style="display:none;" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
                 </div>
+                <span class="wave-sphere-title">Моя волна</span>
+                <button class="wave-tune-btn" id="btn-wave-tune" onclick="event.stopPropagation(); openWaveSettings();">
+                  <svg width="12" height="12" style="margin-right:4px;"><use href="#icon-sliders"/></svg>
+                  <span>Настроить</span>
+                </button>
               </div>
             </div>
-
-            <div class="wave-current-track-info">
-              <h2 id="wave-now-title">Моя волна</h2>
-              <p id="wave-now-artist">Нажмите на сферу, чтобы запустить бесконечный поток музыки</p>
-            </div>
           </div>
-        </div>
 
-        <div class="wave-bottom-sheet">
-          <div class="wave-sheet-header">
-            <div>
-              <h3 class="wave-queue-title">Далее в волне</h3>
-              <p id="wave-status-text" class="wave-queue-sub">Готова к запуску · Нажмите на сферу</p>
-            </div>
-            <div class="wave-sheet-actions">
-              <button class="btn" id="btn-refresh-wave" onclick="refreshWaveStream()">
-                <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-refresh"/></svg>
-                <span>Обновить поток</span>
-              </button>
-              <button class="btn" id="btn-download-wave" onclick="downloadAllWaveTracks()">
-                <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-download"/></svg>
-                <span>Скачать поток</span>
-              </button>
-            </div>
+          <!-- 3. Track info (24px below sphere): Title (ellipsis) -> 4px -> Artist -->
+          <div class="wave-track-meta">
+            <h2 id="wave-now-title" class="wave-title-ellipsis">Моя волна</h2>
+            <p id="wave-now-artist" class="wave-artist-ellipsis">Нажмите на сферу, чтобы запустить бесконечный поток музыки</p>
           </div>
-          <div id="wave-track-list" class="wave-track-list"></div>
+
+          <!-- 4. Queue block (40px below track info) -->
+          <div class="wave-queue-section">
+            <div class="wave-queue-header">
+              <div class="wave-queue-titles">
+                <h3 class="wave-queue-heading">Далее в волне</h3>
+                <p id="wave-status-text" class="wave-queue-sub">Нажмите на сферу, чтобы запустить</p>
+              </div>
+              <div class="wave-queue-actions">
+                <button class="btn" id="btn-refresh-wave" onclick="refreshWaveStream()">
+                  <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-refresh"/></svg>
+                  <span>Обновить поток</span>
+                </button>
+                <button class="btn" id="btn-download-wave" onclick="downloadAllWaveTracks()">
+                  <svg width="13" height="13" style="margin-right:6px;"><use href="#icon-download"/></svg>
+                  <span>Скачать поток</span>
+                </button>
+              </div>
+            </div>
+            <div id="wave-track-list" class="wave-track-list"></div>
+          </div>
         </div>
       </div>
-
     </main>
   </div>
 
@@ -901,7 +901,7 @@
   </div>
 
   <!-- ── OTA Updater Overlay ── -->
-  <div id="ota-modal-card">
+  <div id="ota-modal-card" style="display:none;">
     <div class="ota-head">
       <div class="ota-pulse-dot"></div>
       <div class="ota-title">Доступно обновление HurtMusic</div>

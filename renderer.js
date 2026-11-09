@@ -568,7 +568,7 @@ async function playTrackDirect(track, pushToHistory = true) {
 
   if (track.isOnline && !track.fileUrl) {
     // Online Stream Playback
-    showToast(`Воспроизведение: ${track.title}...`);
+    // showToast removed per requirement (only single top-right notification)
     state.isLoadingStream = true;
 
     let streamUrl = track.streamUrl;
@@ -2205,14 +2205,12 @@ function detectTrackMoodPalette(track) {
   }
 
   if (statusEl) {
-    if (state.isMyWaveActive) {
-      if (state.currentPlayingTrack) {
-        statusEl.textContent = `Играет: ${state.currentPlayingTrack.artist} — ${state.currentPlayingTrack.title}`;
-      } else {
-        statusEl.textContent = 'Подбираем персональную волну...';
-      }
+    if (isPlaying && state.isMyWaveActive) {
+      statusEl.textContent = '';
+      statusEl.style.display = 'none';
     } else {
-      statusEl.textContent = 'Готова к запуску · Нажмите на сферу или «Моя волна» внизу';
+      statusEl.textContent = 'Нажмите на сферу, чтобы запустить';
+      statusEl.style.display = 'block';
     }
   }
 
@@ -2277,11 +2275,13 @@ async function setWaveMood(mood) {
     chill: 'Спокойствие и релакс',
     fresh: 'Свежие релизы 2026'
   };
-  showToast(`Волна: режим «${labels[mood] || mood}»`);
+  
 
   state.myWaveQueue = [];
   await fetchWaveRecommendations(mood, false);
-  await playNextMyWaveTrack();
+  if (state.isPlaying && state.isMyWaveActive) {
+    await playNextMyWaveTrack();
+  }
 }
 
 async function fetchWaveRecommendations(mood = 'similar', autoPlay = false) {
