@@ -152,6 +152,17 @@ const state = {
   isOnlineMode: true,
   isLoadingStream: false,
   favorites: loadStoredFavorites(),
+  playlists: loadStoredPlaylists(),
+  activePlaylistId: null,
+
+  // Audio Effects State (Slowed, Nightcore, Reverb)
+  audioFx: {
+    speed: 1.0,
+    preservePitch: false,
+    reverb: 0,
+    bassBoost: 0,
+    preset: 'normal'
+  },
 
   // My Wave (Моя волна) Infinite Stream State
   isMyWaveActive: false,
@@ -586,6 +597,9 @@ function initAudioEvents() {
     const playBtn = document.getElementById('btn-play-pause');
     if (playBtn) playBtn.style.opacity = '1';
     setPlaybackState(true);
+    if (typeof applyAudioFx === 'function') {
+      applyAudioFx();
+    }
   });
 
   audio.addEventListener('pause', () => {
@@ -1398,6 +1412,7 @@ async function switchView(viewName) {
   const tracksContainer = document.getElementById('tracks-container-view');
   const artistsGrid = document.getElementById('artists-grid-view');
   const albumsGrid = document.getElementById('albums-grid-view');
+  const playlistsView = document.getElementById('playlists-view');
 
   if (catBar) {
     catBar.style.display = (viewName === 'online-search') ? 'flex' : 'none';
@@ -1414,6 +1429,7 @@ async function switchView(viewName) {
     if (tracksContainer) tracksContainer.style.display = 'block';
     if (artistsGrid) artistsGrid.style.display = 'none';
     if (albumsGrid) albumsGrid.style.display = 'none';
+    if (playlistsView) playlistsView.style.display = 'none';
 
     if (!state.onlineTracks.length) {
       await selectSearchCategory(state.selectedCategory || 'trending');
@@ -1430,6 +1446,7 @@ async function switchView(viewName) {
     if (tracksContainer) tracksContainer.style.display = 'block';
     if (artistsGrid) artistsGrid.style.display = 'none';
     if (albumsGrid) albumsGrid.style.display = 'none';
+    if (playlistsView) playlistsView.style.display = 'none';
 
     await loadDownloadedTracks();
     applyFilters();
@@ -1444,8 +1461,22 @@ async function switchView(viewName) {
     if (tracksContainer) tracksContainer.style.display = 'block';
     if (artistsGrid) artistsGrid.style.display = 'none';
     if (albumsGrid) albumsGrid.style.display = 'none';
+    if (playlistsView) playlistsView.style.display = 'none';
 
     applyFilters();
+  } else if (viewName === 'playlists') {
+    if (heading) heading.textContent = 'Плейлисты';
+    if (heroBadge) heroBadge.textContent = 'Плейлисты';
+    if (heroTitle) heroTitle.textContent = 'Ваши плейлисты';
+    if (heroSubtitle) heroSubtitle.textContent = 'Кастомные подборки и импортированные плейлисты';
+    if (heroArtistName) heroArtistName.textContent = 'Плейлисты';
+    if (searchInput) searchInput.placeholder = 'Поиск по плейлистам';
+    if (tracksContainer) tracksContainer.style.display = 'none';
+    if (artistsGrid) artistsGrid.style.display = 'none';
+    if (albumsGrid) albumsGrid.style.display = 'none';
+    if (playlistsView) playlistsView.style.display = 'block';
+
+    renderPlaylistsGrid();
   } else if (viewName === 'artists') {
     if (heading) heading.textContent = 'Исполнители';
     if (heroBadge) heroBadge.textContent = 'Артисты';
@@ -1456,6 +1487,7 @@ async function switchView(viewName) {
     if (tracksContainer) tracksContainer.style.display = 'none';
     if (artistsGrid) artistsGrid.style.display = 'block';
     if (albumsGrid) albumsGrid.style.display = 'none';
+    if (playlistsView) playlistsView.style.display = 'none';
 
     renderArtistsGrid();
   } else if (viewName === 'albums') {
@@ -1468,6 +1500,7 @@ async function switchView(viewName) {
     if (tracksContainer) tracksContainer.style.display = 'none';
     if (artistsGrid) artistsGrid.style.display = 'none';
     if (albumsGrid) albumsGrid.style.display = 'block';
+    if (playlistsView) playlistsView.style.display = 'none';
 
     renderAlbumsGrid();
   }
@@ -4219,6 +4252,443 @@ window.addEventListener('keydown', (e) => {
     closeFullscreenModal();
     toggleSettingsModal(false);
     if (typeof toggleLyricsModal === 'function') toggleLyricsModal(false);
+    toggleAudioFxModal(false);
+    toggleImportPlaylistModal(false);
     dismissOtaModal();
   }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Audio FX Engine (Slowed + Reverb, Nightcore, Ambient, Bass)
+// ─────────────────────────────────────────────────────────────
+let fxReverbNode = null;
+let fxDryGain = null;
+let fxWetGain = null;
+let fxBassBoostFilter = null;
+
+function buildImpulseResponse(ctx, duration = 2.5, decay = 2.0) {
+  const sampleRate = ctx.sampleRate;
+  const length = sampleRate * duration;
+  const impulse = ctx.createBuffer(2, length, sampleRate);
+  const left = impulse.getChannelData(0);
+  const right = impulse.getChannelData(1);
+
+  for (let i = 0; i < length; i++) {
+    const n = i / length;
+    const env = Math.pow(1 - n, decay);
+    left[i] = ((Math.random() * 2) - 1) * env;
+    right[i] = ((Math.random() * 2) - 1) * env;
+  }
+  return impulse;
+}
+
+function initAudioFxChain() {
+  const visualizer = window.visualizerInstance;
+  if (!visualizer || !visualizer.audioContext) return;
+  const ctx = visualizer.audioContext;
+
+  if (fxReverbNode) return;
+
+  try {
+    fxReverbNode = ctx.createConvolver();
+    fxReverbNode.buffer = buildImpulseResponse(ctx, 2.8, 2.2);
+
+    fxDryGain = ctx.createGain();
+    fxDryGain.gain.value = 1.0;
+
+    fxWetGain = ctx.createGain();
+    fxWetGain.gain.value = 0.0;
+
+    fxBassBoostFilter = ctx.createBiquadFilter();
+    fxBassBoostFilter.type = 'lowshelf';
+    fxBassBoostFilter.frequency.value = 90;
+    fxBassBoostFilter.gain.value = 0;
+
+    try {
+      visualizer.analyser.disconnect();
+    } catch (e) {}
+
+    visualizer.analyser.connect(fxBassBoostFilter);
+
+    fxBassBoostFilter.connect(fxDryGain);
+    fxDryGain.connect(ctx.destination);
+
+    fxBassBoostFilter.connect(fxReverbNode);
+    fxReverbNode.connect(fxWetGain);
+    fxWetGain.connect(ctx.destination);
+
+    console.log('[AudioFX] Chain connected successfully');
+  } catch (err) {
+    console.warn('[AudioFX] Init error:', err.message);
+  }
+}
+
+function applyAudioFx() {
+  const fx = state.audioFx;
+  if (!audio) return;
+
+  audio.playbackRate = fx.speed;
+  if (typeof audio.preservesPitch !== 'undefined') {
+    audio.preservesPitch = fx.preservePitch;
+  } else if (typeof audio.mozPreservesPitch !== 'undefined') {
+    audio.mozPreservesPitch = fx.preservePitch;
+  } else if (typeof audio.webkitPreservesPitch !== 'undefined') {
+    audio.webkitPreservesPitch = fx.preservePitch;
+  }
+
+  initAudioFxChain();
+
+  const wet = Math.min(1, Math.max(0, fx.reverb / 100));
+  if (fxWetGain && fxDryGain) {
+    fxWetGain.gain.value = wet * 0.95;
+    fxDryGain.gain.value = Math.max(0.4, 1.0 - (wet * 0.35));
+  }
+
+  if (fxBassBoostFilter) {
+    fxBassBoostFilter.gain.value = fx.bassBoost;
+  }
+
+  const speedLabel = document.getElementById('label-fx-speed');
+  if (speedLabel) speedLabel.textContent = `${fx.speed.toFixed(2)}x`;
+  const reverbLabel = document.getElementById('label-fx-reverb');
+  if (reverbLabel) reverbLabel.textContent = `${Math.round(fx.reverb)}%`;
+
+  const speedSlider = document.getElementById('fx-speed-slider');
+  if (speedSlider) speedSlider.value = fx.speed;
+  const reverbSlider = document.getElementById('fx-reverb-slider');
+  if (reverbSlider) reverbSlider.value = fx.reverb;
+  const pitchCheck = document.getElementById('fx-preserve-pitch');
+  if (pitchCheck) pitchCheck.checked = fx.preservePitch;
+
+  const btnFxBar = document.getElementById('btn-audio-fx');
+  if (btnFxBar) {
+    const isCustom = (fx.speed !== 1.0 || fx.reverb > 0 || fx.bassBoost > 0);
+    btnFxBar.classList.toggle('active', isCustom);
+    btnFxBar.style.color = isCustom ? 'var(--accent)' : '';
+  }
+}
+
+function setAudioFxSpeed(val) {
+  state.audioFx.speed = parseFloat(val) || 1.0;
+  state.audioFx.preset = 'custom';
+  highlightFxPreset('custom');
+  applyAudioFx();
+}
+window.setAudioFxSpeed = setAudioFxSpeed;
+
+function setAudioFxReverb(val) {
+  state.audioFx.reverb = parseFloat(val) || 0;
+  state.audioFx.preset = 'custom';
+  highlightFxPreset('custom');
+  applyAudioFx();
+}
+window.setAudioFxReverb = setAudioFxReverb;
+
+function setAudioFxPreservePitch(checked) {
+  state.audioFx.preservePitch = !!checked;
+  applyAudioFx();
+}
+window.setAudioFxPreservePitch = setAudioFxPreservePitch;
+
+function applyFxPreset(presetName) {
+  state.audioFx.preset = presetName;
+  highlightFxPreset(presetName);
+
+  switch (presetName) {
+    case 'slowed':
+      state.audioFx.speed = 0.85;
+      state.audioFx.preservePitch = false;
+      state.audioFx.reverb = 48;
+      state.audioFx.bassBoost = 4;
+      showToast('Включен пресет: Slowed + Reverb');
+      break;
+
+    case 'nightcore':
+      state.audioFx.speed = 1.25;
+      state.audioFx.preservePitch = false;
+      state.audioFx.reverb = 8;
+      state.audioFx.bassBoost = 1.5;
+      showToast('Включен пресет: Nightcore');
+      break;
+
+    case 'ambient':
+      state.audioFx.speed = 0.90;
+      state.audioFx.preservePitch = true;
+      state.audioFx.reverb = 75;
+      state.audioFx.bassBoost = 0;
+      showToast('Включен пресет: Ambient');
+      break;
+
+    case 'bass':
+      state.audioFx.speed = 1.0;
+      state.audioFx.preservePitch = true;
+      state.audioFx.reverb = 10;
+      state.audioFx.bassBoost = 8;
+      showToast('Включен пресет: Bass Boosted');
+      break;
+
+    case 'normal':
+    default:
+      resetAudioFx();
+      showToast('Звуковые эффекты отключены');
+      return;
+  }
+
+  applyAudioFx();
+}
+window.applyFxPreset = applyFxPreset;
+
+function highlightFxPreset(name) {
+  const presets = ['normal', 'slowed', 'nightcore', 'ambient', 'bass'];
+  presets.forEach(p => {
+    const el = document.getElementById(`btn-fx-preset-${p}`);
+    if (el) el.classList.toggle('active', p === name);
+  });
+}
+
+function resetAudioFx() {
+  state.audioFx = {
+    speed: 1.0,
+    preservePitch: false,
+    reverb: 0,
+    bassBoost: 0,
+    preset: 'normal'
+  };
+  highlightFxPreset('normal');
+  applyAudioFx();
+}
+window.resetAudioFx = resetAudioFx;
+
+function toggleAudioFxModal(forceState) {
+  const modal = document.getElementById('modal-audio-fx');
+  if (!modal) return;
+  const isShow = (forceState !== undefined) ? forceState : (modal.style.display === 'none');
+  modal.style.display = isShow ? 'flex' : 'none';
+  if (isShow) {
+    applyAudioFx();
+  }
+}
+window.toggleAudioFxModal = toggleAudioFxModal;
+
+// ─────────────────────────────────────────────────────────────
+// Custom Playlists & Spotify / SoundCloud Import
+// ─────────────────────────────────────────────────────────────
+function loadStoredPlaylists() {
+  try {
+    const raw = localStorage.getItem('hurtmusic_custom_playlists');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveStoredPlaylists() {
+  try {
+    localStorage.setItem('hurtmusic_custom_playlists', JSON.stringify(state.playlists || []));
+  } catch (e) {}
+}
+
+function toggleImportPlaylistModal(forceState) {
+  const modal = document.getElementById('modal-import-playlist');
+  if (!modal) return;
+  const isShow = (forceState !== undefined) ? forceState : (modal.style.display === 'none');
+  modal.style.display = isShow ? 'flex' : 'none';
+  if (isShow) {
+    const inp = document.getElementById('import-playlist-url');
+    if (inp) {
+      inp.value = '';
+      setTimeout(() => inp.focus(), 50);
+    }
+    const st = document.getElementById('import-playlist-status');
+    if (st) st.style.display = 'none';
+  }
+}
+window.toggleImportPlaylistModal = toggleImportPlaylistModal;
+window.openImportPlaylistModal = () => toggleImportPlaylistModal(true);
+
+function promptCreatePlaylist() {
+  const name = prompt('Введите название нового плейлиста:');
+  if (!name || !name.trim()) return;
+
+  const newPl = {
+    id: `pl_${Date.now()}`,
+    title: name.trim(),
+    createdAt: Date.now(),
+    coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80',
+    tracks: []
+  };
+
+  state.playlists.unshift(newPl);
+  saveStoredPlaylists();
+  renderPlaylistsGrid();
+  showToast(`Создан плейлист: ${newPl.title}`);
+}
+window.promptCreatePlaylist = promptCreatePlaylist;
+
+async function executeImportPlaylist() {
+  const inp = document.getElementById('import-playlist-url');
+  const statusEl = document.getElementById('import-playlist-status');
+  const btn = document.getElementById('btn-submit-import');
+  const url = (inp ? inp.value : '').trim();
+
+  if (!url) {
+    showToast('Введите ссылку на плейлист Spotify или SoundCloud');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Импортируем данные плейлиста...';
+  }
+
+  try {
+    let res = null;
+    if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).importPlaylist) {
+      res = await (window.__testMockAPI || window.electronAPI).importPlaylist(url);
+    }
+
+    if (!res || !res.success) {
+      throw new Error(res?.error || 'Не удалось импортировать плейлист');
+    }
+
+    let finalTracks = [];
+
+    if (res.source === 'Spotify' && res.items && res.items.length) {
+      const total = res.items.length;
+      if (statusEl) statusEl.textContent = `Поиск ${total} треков в каталоге SoundCloud...`;
+
+      const itemsToMatch = res.items.slice(0, 45);
+      for (let i = 0; i < itemsToMatch.length; i++) {
+        const item = itemsToMatch[i];
+        try {
+          if (statusEl) statusEl.textContent = `Импорт [${i + 1}/${itemsToMatch.length}]: ${item.title}`;
+          const q = `${item.title} ${item.artist}`.trim();
+          let found = [];
+          if ((window.__testMockAPI || window.electronAPI) && (window.__testMockAPI || window.electronAPI).searchOnline) {
+            found = await (window.__testMockAPI || window.electronAPI).searchOnline(q);
+          }
+          if (found && found.length > 0) {
+            finalTracks.push(found[0]);
+          }
+        } catch (e) {}
+      }
+    } else if (res.tracks && res.tracks.length) {
+      finalTracks = res.tracks;
+    }
+
+    const playlist = {
+      id: `pl_imp_${Date.now()}`,
+      title: res.title || 'Импортированный плейлист',
+      coverUrl: res.coverUrl || (finalTracks[0]?.coverUrl) || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80',
+      createdAt: Date.now(),
+      source: res.source,
+      tracks: finalTracks
+    };
+
+    state.playlists.unshift(playlist);
+    saveStoredPlaylists();
+
+    toggleImportPlaylistModal(false);
+    renderPlaylistsGrid();
+    showToast(`Импортировано: «${playlist.title}» (${finalTracks.length} треков)`);
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = `Ошибка: ${err.message}`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+window.executeImportPlaylist = executeImportPlaylist;
+
+function renderPlaylistsGrid() {
+  const grid = document.getElementById('playlists-grid');
+  const empty = document.getElementById('playlists-empty-state');
+  const stats = document.getElementById('playlists-stats-label');
+  if (!grid) return;
+
+  const list = state.playlists || [];
+  if (stats) {
+    stats.textContent = formatPlural(list.length, 'плейлист', 'плейлиста', 'плейлистов');
+  }
+
+  if (list.length === 0) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  grid.innerHTML = list.map(pl => {
+    const count = pl.tracks ? pl.tracks.length : 0;
+    const countStr = formatPlural(count, 'трек', 'трека', 'треков');
+    const safeTitle = escapeHtml(pl.title || 'Без названия');
+    const cover = pl.coverUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
+
+    return `
+      <div class="artist-card" onclick="openPlaylistDetail('${pl.id}')" style="cursor:pointer; position:relative;">
+        <div style="width:100%; aspect-ratio:1; border-radius:12px; overflow:hidden; margin-bottom:10px; background:#181818;">
+          <img src="${cover}" style="width:100%; height:100%; object-fit:cover;" alt="${safeTitle}" loading="lazy">
+        </div>
+        <div class="artist-name" style="font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeTitle}">${safeTitle}</div>
+        <div class="artist-genre" style="font-size:11px; color:var(--text-tertiary); margin-top:2px;">${countStr} ${pl.source ? `• ${pl.source}` : ''}</div>
+        <button class="icon-btn" onclick="event.stopPropagation(); deletePlaylist('${pl.id}')" title="Удалить плейлист" style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center;">
+          <svg width="12" height="12" style="color:var(--text-secondary);"><use href="#icon-close"/></svg>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+window.renderPlaylistsGrid = renderPlaylistsGrid;
+
+function openPlaylistDetail(playlistId) {
+  const pl = state.playlists.find(p => p.id === playlistId);
+  if (!pl) return;
+
+  state.activePlaylistId = playlistId;
+  state.filteredTracks = pl.tracks || [];
+  state.playbackQueue = [...state.filteredTracks];
+  state.playbackContext = { name: 'playlist', id: playlistId, title: pl.title };
+
+  const playlistsView = document.getElementById('playlists-view');
+  if (playlistsView) playlistsView.style.display = 'none';
+
+  const tracksContainer = document.getElementById('tracks-container-view');
+  if (tracksContainer) tracksContainer.style.display = 'block';
+
+  const detailHeader = document.getElementById('collection-detail-header');
+  const mainHero = document.getElementById('main-hero-card');
+  if (mainHero) mainHero.style.display = 'none';
+
+  if (detailHeader) {
+    detailHeader.style.display = 'flex';
+    const cover = document.getElementById('detail-cover-img');
+    const badge = document.getElementById('detail-badge');
+    const title = document.getElementById('detail-title');
+    const sub = document.getElementById('detail-subtitle');
+    const count = pl.tracks ? pl.tracks.length : 0;
+    const countStr = formatPlural(count, 'трек', 'трека', 'треков');
+
+    if (cover) cover.src = pl.coverUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
+    if (badge) badge.textContent = pl.source ? `Плейлист (${pl.source})` : 'Кастомный плейлист';
+    if (title) title.textContent = pl.title || 'Плейлист';
+    if (sub) sub.textContent = `${countStr} • Создан в HurtMusic`;
+  }
+
+  renderTrackList();
+}
+window.openPlaylistDetail = openPlaylistDetail;
+
+function deletePlaylist(playlistId) {
+  if (!confirm('Удалить этот плейлист?')) return;
+  state.playlists = state.playlists.filter(p => p.id !== playlistId);
+  saveStoredPlaylists();
+  renderPlaylistsGrid();
+  showToast('Плейлист удален');
+}
+window.deletePlaylist = deletePlaylist;

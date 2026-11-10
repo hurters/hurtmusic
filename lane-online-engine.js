@@ -461,6 +461,127 @@ class LaneOnlineEngine {
   }
 
   /**
+   * Import playlist or album tracks from Spotify URL
+   * Works without Spotify API keys by parsing Spotify public embed entity
+   */
+  async importSpotifyPlaylist(url) {
+    try {
+      const cleanUrl = url.trim();
+      let embedUrl = cleanUrl;
+      const match = cleanUrl.match(/open\.spotify\.com\/(playlist|album|track)\/([a-zA-Z0-9]+)/);
+      if (match) {
+        embedUrl = `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
+      }
+
+      const res = await this.httpGet(embedUrl, { 'User-Agent': this.desktopUserAgent }, 10000);
+      if (res.status !== 200) {
+        throw new Error(`Spotify вернул код ${res.status}`);
+      }
+
+      const idx = res.body.indexOf('__NEXT_DATA__');
+      if (idx === -1) {
+        throw new Error('Не удалось извлечь данные Spotify плейлиста');
+      }
+
+      const snippet = res.body.slice(idx);
+      const jsonStart = snippet.indexOf('>') + 1;
+      const jsonEnd = snippet.indexOf('</script>');
+      const json = JSON.parse(snippet.slice(jsonStart, jsonEnd));
+      const entity = json.props?.pageProps?.state?.data?.entity;
+      if (!entity) {
+        throw new Error('Данные плейлиста отсутствуют в структуре Spotify');
+      }
+
+      let coverUrl = '';
+      if (entity.visualIdentity?.image?.length) {
+        const sortedImages = [...entity.visualIdentity.image].sort((a, b) => (b.maxWidth || 0) - (a.maxWidth || 0));
+        coverUrl = sortedImages[0].url || '';
+      }
+
+      const title = entity.name || entity.title || 'Импортированный плейлист';
+      const rawTracks = entity.trackList || (entity.entityType === 'track' ? [entity] : []);
+
+      const tracksToSearch = rawTracks.map(t => ({
+        title: (t.title || t.name || '').trim(),
+        artist: (t.subtitle || (t.artists && t.artists.map(a => a.name).join(', ')) || '').trim(),
+        duration: Math.round((t.duration || 180000) / 1000)
+      })).filter(t => t.title);
+
+      return {
+        success: true,
+        source: 'Spotify',
+        title: title,
+        coverUrl: coverUrl,
+        tracksCount: tracksToSearch.length,
+        items: tracksToSearch
+      };
+    } catch (err) {
+      console.error('[LaneOnlineEngine] importSpotifyPlaylist error:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Import playlist or album tracks from SoundCloud URL
+   */
+  async importSoundCloudPlaylist(url) {
+    try {
+      const cid = await this.getClientId();
+      const cleanUrl = url.trim().split('?')[0];
+      const resolveUrl = `https://api-v2.soundcloud.com/resolve?url=${encodeURIComponent(cleanUrl)}&client_id=${cid}`;
+      const res = await this.httpGet(resolveUrl, { 'User-Agent': this.desktopUserAgent }, 10000);
+
+      if (res.status !== 200) {
+        throw new Error(`SoundCloud вернул статус ${res.status}`);
+      }
+
+      const data = JSON.parse(res.body);
+      if (data.kind !== 'playlist') {
+        throw new Error('Ссылка не ведет на плейлист или альбом SoundCloud');
+      }
+
+      const title = data.title || 'SoundCloud Плейлист';
+      let cover = data.artwork_url || '';
+      if (cover) {
+        cover = cover.replace('-large.jpg', '-t500x500.jpg');
+        if (cover.includes('sndcdn.com')) {
+          cover = 'https://i0.wp.com/' + cover.replace(/^https?:\/\//, '');
+        }
+      }
+
+      const tracks = [];
+      const seenIds = new Set();
+      this.parseSoundCloudCollection(JSON.stringify({ collection: data.tracks || [] }), tracks, seenIds);
+
+      return {
+        success: true,
+        source: 'SoundCloud',
+        title: title,
+        coverUrl: cover,
+        tracksCount: tracks.length,
+        tracks: tracks
+      };
+    } catch (err) {
+      console.error('[LaneOnlineEngine] importSoundCloudPlaylist error:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Universal URL resolver for imported playlist
+   */
+  async importPlaylistFromUrl(url) {
+    const trimmed = (url || '').trim();
+    if (/spotify\.com/i.test(trimmed)) {
+      return await this.importSpotifyPlaylist(trimmed);
+    }
+    if (/soundcloud\.com/i.test(trimmed)) {
+      return await this.importSoundCloudPlaylist(trimmed);
+    }
+    return { success: false, error: 'Поддерживаются публичные ссылки Spotify и SoundCloud' };
+  }
+
+  /**
    * Internal HTTP GET helper
    */
   httpGet(url, customHeaders = {}, timeoutMs = 8000) {

@@ -449,6 +449,15 @@ ipcMain.handle('online:getSimilarTracks', async (event, trackId, artistHint, lim
   }
 });
 
+ipcMain.handle('online:importPlaylist', async (event, url) => {
+  try {
+    return await laneOnlineEngine.importPlaylistFromUrl(url);
+  } catch (err) {
+    console.error('IPC online:importPlaylist error:', err);
+    return { success: false, error: err.message };
+  }
+});
+
 // ─────────────────────────────────────────────────────────────
 // IPC Handlers: Discord Rich Presence (RPC)
 // ─────────────────────────────────────────────────────────────
